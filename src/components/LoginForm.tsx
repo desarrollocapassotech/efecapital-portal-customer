@@ -48,13 +48,13 @@ const LoginForm = () => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-              <TrendingUp className="h-8 w-8 text-white" />
+              <TrendingUp className="h-8 w-8 text-foreground" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             AsesoresFin
           </h1>
-          <p className="text-white/80">
+          <p className="text-foreground/80">
             Tu plataforma de asesoría financiera
           </p>
         </div>
