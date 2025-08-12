@@ -1,13 +1,13 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { 
-  Home, 
-  MessageSquare, 
-  FileText, 
-  Bell, 
-  History, 
+import {
+  Home,
+  MessageSquare,
+  FileText,
+  Bell,
+  History,
   LogOut,
-  TrendingUp
+  TrendingUp,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -29,48 +29,48 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-financial-navy text-white">
+    <div className="flex flex-col h-full bg-card text-foreground border-r border-border">
       {/* Header */}
-      <div className="p-6 border-b border-white/10">
+      <div className="p-6 border-b border-border">
         <div className="flex items-center gap-3">
-          <div className="bg-financial-gold/20 rounded-lg p-2">
-            <TrendingUp className="h-6 w-6 text-financial-gold" />
+          <div className="bg-primary rounded-lg p-2">
+            <TrendingUp className="h-6 w-6 text-primary-foreground" />
           </div>
           <div>
             <h2 className="font-bold text-lg">AsesoresFin</h2>
-            <p className="text-sm text-white/70">Panel Cliente</p>
+            <p className="text-sm text-muted-foreground">Panel Cliente</p>
           </div>
         </div>
       </div>
 
       {/* User Info */}
-      <div className="p-6 border-b border-white/10">
+      <div className="p-6 border-b border-border">
         <div className="bg-white/5 rounded-lg p-4">
           <h3 className="font-medium text-sm">Bienvenido/a</h3>
-          <p className="text-white/90 font-semibold">
+          <p className="text-foreground font-semibold">
             {user?.nombre} {user?.apellido}
           </p>
-          <p className="text-xs text-white/60 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Perfil: {user?.tipoInversor}
           </p>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-6">
+      <nav className="flex-1 p-6 overflow-y-auto">
         <ul className="space-y-2">
           {navigation.map((item) => {
             const isActive = location.pathname === item.href;
             const Icon = item.icon;
-            
+
             return (
               <li key={item.name}>
                 <NavLink
                   to={item.href}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-financial-gold/20 text-financial-gold'
-                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-foreground/70 hover:text-foreground hover:bg-muted'
                   }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -83,11 +83,11 @@ const Sidebar = () => {
       </nav>
 
       {/* Footer */}
-      <div className="p-6 border-t border-white/10">
+      <div className="p-6 border-t border-border">
         <Button
           onClick={handleLogout}
           variant="ghost"
-          className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10"
+          className="w-full justify-start text-foreground/70 hover:text-foreground hover:bg-muted"
         >
           <LogOut className="mr-3 h-5 w-5" />
           Cerrar sesión
