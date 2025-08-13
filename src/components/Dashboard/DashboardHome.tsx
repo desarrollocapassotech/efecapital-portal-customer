@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { getMockDataForUser } from '@/data/mockData';
+import { Mail, Phone } from 'lucide-react';
+
 import { 
   User, 
   Target, 
@@ -74,16 +76,6 @@ const DashboardHome = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Horizonte</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{user?.horizonte}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Bróker</CardTitle>
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -92,18 +84,6 @@ const DashboardHome = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Notificaciones</CardTitle>
-            <Bell className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-financial-gold">
-              {unreadNotifications.length}
-            </div>
-            <p className="text-xs text-muted-foreground">sin leer</p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Objectives */}
@@ -120,121 +100,24 @@ const DashboardHome = () => {
           </p>
         </CardContent>
       </Card>
+      {/* Contact */}
+<Card>
+  <CardHeader>
+    <CardTitle className="flex items-center gap-2">
+      <Mail className="h-5 w-5" />
+      Contacto
+    </CardTitle>
+  </CardHeader>
+  <CardContent className="space-y-2">
+    <p className="text-muted-foreground leading-relaxed">
+      📞 {user?.telefono}
+    </p>
+    <p className="text-muted-foreground leading-relaxed">
+      📧 {user?.email}
+    </p>
+  </CardContent>
+</Card>
 
-      {/* Recent Activity Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Messages */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Mensajes Recientes
-            </CardTitle>
-            <CardDescription>
-              Últimas comunicaciones con tu asesora
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {recentMessages.length > 0 ? (
-              recentMessages.map((message) => (
-                <div key={message.id} className="border-l-4 border-primary pl-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge variant={message.remitente === 'cliente' ? 'secondary' : 'default'}>
-                      {message.remitente === 'cliente' ? 'Tú' : 'Asesora'}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(message.fecha), { 
-                        addSuffix: true, 
-                        locale: es 
-                      })}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {message.contenido}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="text-muted-foreground text-sm">No hay mensajes recientes</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Recent Files */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Archivos Recientes
-            </CardTitle>
-            <CardDescription>
-              Últimos informes subidos por tu asesora
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {recentFiles.length > 0 ? (
-              recentFiles.map((file) => (
-                <div key={file.id} className="border-l-4 border-success pl-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge variant="outline">{file.tipo}</Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(file.fechaSubida), { 
-                        addSuffix: true, 
-                        locale: es 
-                      })}
-                    </span>
-                  </div>
-                  <p className="text-sm font-medium">{file.nombre}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {file.comentario}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="text-muted-foreground text-sm">No hay archivos recientes</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Activity Timeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Actividad Reciente
-          </CardTitle>
-          <CardDescription>
-            Resumen de tu actividad más reciente
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {recentActivity.map((activity, index) => (
-              <div key={activity.id} className="flex items-start gap-4">
-                <div className="relative">
-                  <div className="h-3 w-3 bg-primary rounded-full"></div>
-                  {index < recentActivity.length - 1 && (
-                    <div className="absolute top-3 left-1.5 w-px h-6 bg-border"></div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">{activity.titulo}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {activity.descripcion}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {formatDistanceToNow(new Date(activity.fecha), { 
-                      addSuffix: true, 
-                      locale: es 
-                    })}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

@@ -5,6 +5,7 @@ interface User {
   nombre: string;
   apellido: string;
   email: string;
+  telefono: string;
   tipoInversor: 'conservador' | 'moderado' | 'agresivo';
   objetivos: string;
   horizonte: string;
@@ -27,6 +28,7 @@ const mockUsers: (User & { password: string })[] = [
     nombre: 'María',
     apellido: 'González',
     email: 'maria.gonzalez@email.com',
+    telefono: '+54 9 11 1234-5678', 
     password: 'password123',
     tipoInversor: 'moderado',
     objetivos: 'Crecimiento patrimonial y ahorro para la jubilación',
@@ -38,6 +40,7 @@ const mockUsers: (User & { password: string })[] = [
     nombre: 'Carlos',
     apellido: 'Rodríguez',
     email: 'carlos.rodriguez@email.com',
+    telefono: '+54 9 11 1234-5677', 
     password: 'password123',
     tipoInversor: 'agresivo',
     objetivos: 'Maximizar rendimientos a corto plazo',
@@ -49,6 +52,7 @@ const mockUsers: (User & { password: string })[] = [
     nombre: 'Ana',
     apellido: 'Martínez',
     email: 'ana.martinez@email.com',
+    telefono: '+54 9 11 1234-5679', 
     password: 'password123',
     tipoInversor: 'conservador',
     objetivos: 'Preservación de capital y ingresos estables',
