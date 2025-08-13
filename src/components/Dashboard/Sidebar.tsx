@@ -15,9 +15,6 @@ import { Button } from '@/components/ui/button';
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Comunicaciones', href: '/dashboard/messages', icon: MessageSquare },
-  { name: 'Archivos', href: '/dashboard/files', icon: FileText },
-  { name: 'Notificaciones', href: '/dashboard/notifications', icon: Bell },
-  { name: 'Historial', href: '/dashboard/history', icon: History },
 ];
 
 const Sidebar = () => {
@@ -49,9 +46,6 @@ const Sidebar = () => {
           <h3 className="font-medium text-sm">Bienvenido/a</h3>
           <p className="text-foreground font-semibold">
             {user?.nombre} {user?.apellido}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Perfil: {user?.tipoInversor}
           </p>
         </div>
       </div>
