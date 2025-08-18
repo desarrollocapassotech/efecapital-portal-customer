@@ -8,9 +8,6 @@ import LoginForm from "@/components/LoginForm";
 import DashboardLayout from "@/components/Dashboard/DashboardLayout";
 import DashboardHome from "@/components/Dashboard/DashboardHome";
 import Messages from "@/components/Dashboard/Messages";
-import Files from "@/components/Dashboard/Files";
-import Notifications from "@/components/Dashboard/Notifications";
-import History from "@/components/Dashboard/History";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,9 +49,6 @@ const App = () => (
             >
               <Route index element={<DashboardHome />} />
               <Route path="messages" element={<Messages />} />
-              <Route path="files" element={<Files />} />
-              <Route path="notifications" element={<Notifications />} />
-              <Route path="history" element={<History />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
