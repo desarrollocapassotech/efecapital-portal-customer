@@ -3,8 +3,10 @@ export interface Message {
   fecha: string;
   contenido: string;
   remitente: 'cliente' | 'asesora';
-  estado: 'pendiente' | 'respondido' | 'en_revision';
+  estado: 'pendiente' | 'respondido' | 'en_revision'| 'enviado';
   esIngresoCapital: boolean;
+  leido: boolean;
+  archivo?: Archivo;
 }
 
 export interface Archivo {
@@ -14,6 +16,7 @@ export interface Archivo {
   fechaSubida: string;
   comentario: string;
   tamaño: string;
+  url: string;
 }
 
 export interface Notificacion {
@@ -42,7 +45,8 @@ export const mockDataUser1 = {
       contenido: 'Hola Laura, ¿podrías revisar mi cartera actual? He tenido algunas dudas sobre la diversificación.',
       remitente: 'cliente' as const,
       estado: 'respondido' as const,
-      esIngresoCapital: false
+      esIngresoCapital: false,
+      leido: true
     },
     {
       id: '2',
@@ -50,7 +54,12 @@ export const mockDataUser1 = {
       contenido: 'Hola María, por supuesto. He revisado tu cartera y está bien balanceada para tu perfil moderado. Te envío un informe detallado.',
       remitente: 'asesora' as const,
       estado: 'respondido' as const,
-      esIngresoCapital: false
+      esIngresoCapital: false,
+      leido: false,
+      archivo: { // ← Mensaje con archivo adjunto
+      nombre: 'Informe_Cartera_Maria.pdf',
+      url: '/uploads/informe_cartera_maría.pdf'
+    }
     },
     {
       id: '3',
@@ -58,7 +67,8 @@ export const mockDataUser1 = {
       contenido: 'Tengo disponibles $50,000 adicionales para invertir. ¿Cuál sería tu recomendación?',
       remitente: 'cliente' as const,
       estado: 'pendiente' as const,
-      esIngresoCapital: true
+      esIngresoCapital: true,
+      leido: true
     }
   ] as Message[],
 
