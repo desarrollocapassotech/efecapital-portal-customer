@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
 import { getMockDataForUser, Message } from '@/data/mockData';
 import {
@@ -13,8 +12,7 @@ import {
   CheckCircle,
   AlertCircle,
   Paperclip,
-  DollarSign,
-  Image as ImageIcon,
+  ImageIcon,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -25,7 +23,6 @@ const Messages = () => {
   const userId = user?.id || '1';
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [isCapitalEntry, setIsCapitalEntry] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Cargar mensajes desde mock y sincronizar con localStorage
@@ -50,34 +47,29 @@ const Messages = () => {
     }
   }, [messages, userId]);
 
-  // Marcar mensajes del asesor como leídos al entrar al chat y actualizar contador
-useEffect(() => {
-  const unreadMessages = messages.filter(
-    (msg) => msg.remitente === 'asesora' && !msg.leido
-  );
-
-  const unreadCount = unreadMessages.length;
-
-  // Si hay mensajes no leídos, marcarlos como leídos y actualizar localStorage
-  if (unreadCount > 0) {
-    const updatedMessages = messages.map((msg) =>
-      msg.remitente === 'asesora' && !msg.leido ? { ...msg, leido: true } : msg
+  // Marcar mensajes del asesor como leídos al entrar al chat
+  useEffect(() => {
+    const unreadMessages = messages.filter(
+      (msg) => msg.remitente === 'asesora' && !msg.leido
     );
-    setMessages(updatedMessages);
 
-    // ✅ Guardar el número de mensajes no leídos que había
-    localStorage.setItem(`unreadMessages_${userId}`, String(unreadCount));
-  }
+    const unreadCount = unreadMessages.length;
 
-  // // ✅ Asegurarnos de que si no hay mensajes no leídos, el contador sea 0
-  // if (unreadCount === 0) {
-  //   localStorage.setItem(`unreadMessages_${userId}`, '0');
-  // }
-}, [messages, userId]);
+    if (unreadCount > 0) {
+      const updatedMessages = messages.map((msg) =>
+        msg.remitente === 'asesora' && !msg.leido ? { ...msg, leido: true } : msg
+      );
+      setMessages(updatedMessages);
+
+      localStorage.setItem(`unreadMessages_${userId}`, String(unreadCount));
+    }
+  }, [messages, userId]);
+
   // Scroll al final
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -91,11 +83,9 @@ useEffect(() => {
       contenido: newMessage,
       remitente: 'cliente',
       estado: 'enviado',
-      leido: true,
-      esIngresoCapital: isCapitalEntry,
+      leido: true
     };
 
-    // Agregar el mensaje al inicio y ordenar
     setMessages((prevMessages) => {
       const updatedMessages = [...prevMessages, myMessage];
       return updatedMessages.sort((a, b) =>
@@ -104,7 +94,6 @@ useEffect(() => {
     });
 
     setNewMessage('');
-    setIsCapitalEntry(false);
 
     // Simular respuesta del asesor
     setTimeout(() => {
@@ -114,8 +103,7 @@ useEffect(() => {
         contenido: 'Gracias por tu mensaje. Lo revisaré pronto.',
         remitente: 'asesora',
         estado: 'respondido',
-        leido: false,
-        esIngresoCapital: false,
+        leido: false
       };
       setMessages((prev) => {
         const updatedMessages = [response, ...prev];
@@ -127,9 +115,7 @@ useEffect(() => {
 
     toast({
       title: 'Mensaje enviado',
-      description: isCapitalEntry
-        ? 'Tu ingreso de capital ha sido enviado.'
-        : 'Tu mensaje fue enviado a la asesora.',
+      description: 'Tu mensaje fue enviado a la asesora.',
     });
   };
 
@@ -215,12 +201,6 @@ useEffect(() => {
                   }`}
                 >
                   {renderContent(msg)}
-                  {msg.esIngresoCapital && (
-                    <Badge className="mt-1 bg-yellow-100 text-yellow-800 text-xs">
-                      <DollarSign className="h-3 w-3 mr-1" />
-                      Ingreso de Capital
-                    </Badge>
-                  )}
                   <div
                     className={`text-xs mt-1 flex items-center gap-1 ${
                       msg.remitente === 'cliente' ? 'text-primary-foreground/80' : 'text-gray-500'
@@ -249,14 +229,6 @@ useEffect(() => {
             rows={1}
           />
           <div className="flex items-center justify-between">
-            <label className="text-sm flex items-center gap-2 cursor-pointer">
-              <Checkbox
-                checked={isCapitalEntry}
-                onCheckedChange={(c) => setIsCapitalEntry(!!c)}
-              />
-              Marcar como Ingreso de Capital
-              <DollarSign className="h-4 w-4 text-yellow-600" />
-            </label>
             <Button onClick={handleSendMessage} size="sm" disabled={!newMessage.trim()}>
               <Send className="h-4 w-4 mr-1" />
               Enviar

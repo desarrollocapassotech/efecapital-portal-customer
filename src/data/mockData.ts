@@ -4,7 +4,6 @@ export interface Message {
   contenido: string;
   remitente: 'cliente' | 'asesora';
   estado: 'pendiente' | 'respondido' | 'en_revision'| 'enviado';
-  esIngresoCapital: boolean;
   leido: boolean;
   archivo?: Archivo;
 }
@@ -45,7 +44,6 @@ export const mockDataUser1 = {
       contenido: 'Hola Laura, ¿podrías revisar mi cartera actual? He tenido algunas dudas sobre la diversificación.',
       remitente: 'cliente' as const,
       estado: 'respondido' as const,
-      esIngresoCapital: false,
       leido: true
     },
     {
@@ -54,7 +52,6 @@ export const mockDataUser1 = {
       contenido: 'Hola María, por supuesto. He revisado tu cartera y está bien balanceada para tu perfil moderado. Te envío un informe detallado.',
       remitente: 'asesora' as const,
       estado: 'respondido' as const,
-      esIngresoCapital: false,
       leido: false,
       archivo: { // ← Mensaje con archivo adjunto
       nombre: 'Informe_Cartera_Maria.pdf',
@@ -67,7 +64,6 @@ export const mockDataUser1 = {
       contenido: 'Tengo disponibles $50,000 adicionales para invertir. ¿Cuál sería tu recomendación?',
       remitente: 'cliente' as const,
       estado: 'pendiente' as const,
-      esIngresoCapital: true,
       leido: true
     }
   ] as Message[],
@@ -158,8 +154,7 @@ export const mockDataUser2 = {
       fecha: '2024-01-18T08:45:00Z',
       contenido: 'Buenos días Laura, quiero aumentar mi exposición a acciones tech. ¿Qué opinas?',
       remitente: 'cliente' as const,
-      estado: 'en_revision' as const,
-      esIngresoCapital: false
+      estado: 'en_revision' as const
     }
   ] as Message[],
   archivos: [] as Archivo[],
@@ -174,8 +169,7 @@ export const mockDataUser3 = {
       fecha: '2024-01-17T16:20:00Z',
       contenido: 'Hola, me gustaría revisar las opciones de bonos para 2024.',
       remitente: 'cliente' as const,
-      estado: 'respondido' as const,
-      esIngresoCapital: false
+      estado: 'respondido' as const
     }
   ] as Message[],
   archivos: [] as Archivo[],
