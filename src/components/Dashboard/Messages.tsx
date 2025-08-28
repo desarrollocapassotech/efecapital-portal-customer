@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { getMockDataForUser, Message } from '@/data/mockData';
 import {
@@ -13,8 +12,9 @@ import {
   AlertCircle,
   Paperclip,
   ImageIcon,
+  FileDown,
 } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 
@@ -25,13 +25,12 @@ const Messages = () => {
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Cargar mensajes desde mock y sincronizar con localStorage
+  // Cargar mensajes
   useEffect(() => {
     const data = getMockDataForUser(userId);
     const stored = localStorage.getItem(`messages_${userId}`);
     const initialMessages = stored ? JSON.parse(stored) : data.mensajes;
 
-    // Aseguramos que los mensajes tengan `leido`
     const withReadStatus = initialMessages.map((msg: Message) => ({
       ...msg,
       leido: msg.remitente === 'cliente' ? true : msg.leido ?? false,
@@ -40,14 +39,14 @@ const Messages = () => {
     setMessages(withReadStatus);
   }, [userId]);
 
-  // Guardar mensajes en localStorage cuando cambien
+  // Guardar en localStorage
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(`messages_${userId}`, JSON.stringify(messages));
     }
   }, [messages, userId]);
 
-  // Marcar mensajes del asesor como leídos al entrar al chat
+  // Marcar mensajes de asesora como leídos al entrar
   useEffect(() => {
     const unreadMessages = messages.filter(
       (msg) => msg.remitente === 'asesora' && !msg.leido
@@ -60,7 +59,6 @@ const Messages = () => {
         msg.remitente === 'asesora' && !msg.leido ? { ...msg, leido: true } : msg
       );
       setMessages(updatedMessages);
-
       localStorage.setItem(`unreadMessages_${userId}`, String(unreadCount));
     }
   }, [messages, userId]);
@@ -83,19 +81,15 @@ const Messages = () => {
       contenido: newMessage,
       remitente: 'cliente',
       estado: 'enviado',
-      leido: true
+      leido: true,
     };
 
-    setMessages((prevMessages) => {
-      const updatedMessages = [...prevMessages, myMessage];
-      return updatedMessages.sort((a, b) =>
-        new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
-      );
-    });
-
+    setMessages((prev) =>
+      [...prev, myMessage].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+    );
     setNewMessage('');
 
-    // Simular respuesta del asesor
+    // Simular respuesta
     setTimeout(() => {
       const response: Message = {
         id: (Date.now() + 1).toString(),
@@ -103,14 +97,11 @@ const Messages = () => {
         contenido: 'Gracias por tu mensaje. Lo revisaré pronto.',
         remitente: 'asesora',
         estado: 'respondido',
-        leido: false
+        leido: false,
       };
-      setMessages((prev) => {
-        const updatedMessages = [response, ...prev];
-        return updatedMessages.sort((a, b) =>
-          new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
-        );
-      });
+      setMessages((prev) =>
+        [...prev, response].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+      );
     }, 1000);
 
     toast({
@@ -133,46 +124,54 @@ const Messages = () => {
     }
   };
 
-  const renderContent = (msg: Message) => {
+  const renderMessageContent = (msg: Message) => {
     if (msg.archivo) {
       const ext = msg.archivo.nombre.split('.').pop()?.toLowerCase();
+
       if (['jpg', 'jpeg', 'png', 'gif'].includes(ext || '')) {
         return (
-          <div className="mt-2">
-            <img
-              src={msg.archivo.url}
-              alt={msg.archivo.nombre}
-              className="max-w-xs rounded-lg"
-            />
-            <p className="text-xs text-muted-foreground mt-1">{msg.archivo.nombre}</p>
+          <div
+            className="flex items-center gap-3 p-3 bg-background border border-border rounded-lg shadow-sm cursor-pointer hover:shadow transition-shadow"
+            onClick={() => window.open(msg.archivo?.url, '_blank')}
+          >
+            <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
+              <ImageIcon className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-medium truncate">{msg.archivo.nombre}</h4>
+              <p className="text-xs text-muted-foreground">Imagen</p>
+            </div>
+            <FileDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </div>
         );
       }
+
       if (ext === 'pdf') {
         return (
-          <div className="mt-2">
-            <a
-              href={msg.archivo.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-primary hover:underline"
-            >
-              <Paperclip className="h-4 w-4" />
-              {msg.archivo.nombre}
-            </a>
+          <div
+            className="flex items-center gap-3 p-3 bg-background border border-border rounded-lg shadow-sm cursor-pointer hover:shadow transition-shadow"
+            onClick={() => window.open(msg.archivo?.url, '_blank')}
+          >
+            <div className="w-10 h-10 bg-primary/10 rounded flex items-center justify-center">
+              <Paperclip className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-medium truncate">{msg.archivo.nombre}</h4>
+              <p className="text-xs text-muted-foreground">Documento PDF</p>
+            </div>
+            <FileDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </div>
         );
       }
     }
-    return <p>{msg.contenido}</p>;
+
+    return <p className="text-sm">{msg.contenido}</p>;
   };
 
-  const sortedMessages = [...messages].sort((a, b) =>
-    new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
-  );
+  const sortedMessages = [...messages].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
 
   return (
-    <div className="space-y-6">
+    <div className="mt-8 h-full flex flex-col overflow-hidden"> {/* 🔥 -mb-8 compensa el py-8 del layout */}
       {/* Header */}
       <div className="flex items-center gap-4">
         <div className="bg-primary/10 rounded-full p-3">
@@ -185,56 +184,76 @@ const Messages = () => {
       </div>
 
       {/* Chat */}
-      <Card className="overflow-hidden">
-        <CardContent className="max-h-96 overflow-y-auto space-y-4 p-4">
-          {sortedMessages.length > 0 ? (
-            sortedMessages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex ${msg.remitente === 'cliente' ? 'justify-end' : 'justify-start'}`}
-              >
+      <Card className="h-full flex flex-col overflow-hidden">
+        <CardContent className="flex-1 p-0 flex flex-col">
+          {/* Área de mensajes con scroll */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {sortedMessages.length > 0 ? (
+              sortedMessages.map((msg) => (
                 <div
-                  className={`max-w-xs px-4 py-2 rounded-lg ${
-                    msg.remitente === 'cliente'
-                      ? 'bg-primary text-primary-foreground rounded-tr-none'
-                      : 'bg-gray-100 rounded-tl-none'
-                  }`}
+                  key={msg.id}
+                  className={`max-w-[80%] ${msg.remitente === 'cliente' ? 'ml-auto' : 'mr-auto'}`}
                 >
-                  {renderContent(msg)}
                   <div
-                    className={`text-xs mt-1 flex items-center gap-1 ${
-                      msg.remitente === 'cliente' ? 'text-primary-foreground/80' : 'text-gray-500'
+                    className={`p-3 rounded-lg ${
+                      msg.remitente === 'cliente'
+                        ? 'bg-primary/10 border-l-4 border-primary'
+                        : 'bg-muted border-l-4 border-border'
                     }`}
                   >
-                    {format(new Date(msg.fecha), 'HH:mm')}
-                    {msg.remitente === 'cliente' && getStatusIcon(msg.estado)}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium">
+                        {msg.remitente === 'cliente' ? 'Tú' : 'Asesora'}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(msg.fecha), 'dd/MM HH:mm', { locale: es })}
+                      </span>
+                    </div>
+                    {renderMessageContent(msg)}
+                    {msg.remitente === 'cliente' && (
+                      <div className="flex justify-end mt-1">
+                        {getStatusIcon(msg.estado)}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-center text-muted-foreground">No hay mensajes aún.</p>
-          )}
-          <div ref={messagesEndRef} />
-        </CardContent>
-
-        {/* Input */}
-        <div className="border-t p-4">
-          <Textarea
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-            placeholder="Escribe tu mensaje..."
-            className="resize-none mb-2"
-            rows={1}
-          />
-          <div className="flex items-center justify-between">
-            <Button onClick={handleSendMessage} size="sm" disabled={!newMessage.trim()}>
-              <Send className="h-4 w-4 mr-1" />
-              Enviar
-            </Button>
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground py-4">No hay mensajes todavía</p>
+            )}
+            <div ref={messagesEndRef} />
           </div>
-        </div>
+
+          {/* Input */}
+          <div className="border-t p-4 space-y-3">
+            <div className="flex items-end gap-2">
+              <Textarea
+                placeholder="Escribir nuevo mensaje..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                rows={3}
+                className="flex-1 resize-none"
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!newMessage.trim()}
+                size="icon"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Presiona{' '}
+              <kbd className="px-1 bg-background border rounded">Enter</kbd> para enviar.
+            </p>
+          </div>
+        </CardContent>
       </Card>
     </div>
   );
