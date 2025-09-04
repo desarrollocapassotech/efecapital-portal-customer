@@ -89,25 +89,6 @@ const Messages = () => {
     );
     setNewMessage('');
 
-    // Simular respuesta
-    setTimeout(() => {
-      const response: Message = {
-        id: (Date.now() + 1).toString(),
-        fecha: new Date().toISOString(),
-        contenido: 'Gracias por tu mensaje. Lo revisaré pronto.',
-        remitente: 'asesora',
-        estado: 'respondido',
-        leido: false,
-      };
-      setMessages((prev) =>
-        [...prev, response].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
-      );
-    }, 1000);
-
-    toast({
-      title: 'Mensaje enviado',
-      description: 'Tu mensaje fue enviado a la asesora.',
-    });
   };
 
   const getStatusIcon = (status: string) => {
