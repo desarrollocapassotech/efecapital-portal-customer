@@ -168,7 +168,9 @@ const Messages = () => {
     return <p className="text-sm">{msg.contenido}</p>;
   };
 
-  const sortedMessages = [...messages].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+  const sortedMessages = [...messages].sort(
+    (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
+  );
 
   return (
     <div className="mt-8 h-full flex flex-col overflow-hidden">
@@ -184,17 +186,10 @@ const Messages = () => {
       </div>
 
       {/* Chat */}
-      <Card className="flex-1 flex flex-col overflow-hidden">
-        <CardContent className="flex-1 flex flex-col p-0">
-          {/* Área de mensajes con scroll independiente */}
-          <div
-            className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0"
-            style={{
-              maxHeight: 'calc(100vh - 250px)',
-              scrollbarWidth: 'thin',
-              scrollbarColor: '#9ca3af transparent',
-            }}
-          >
+      <Card className="flex-1 flex flex-col overflow-hidden h-full">
+        <CardContent className="flex-1 flex flex-col p-0 h-full">
+          {/* Área de mensajes con scroll */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {sortedMessages.length > 0 ? (
               sortedMessages.map((msg) => (
                 <div
@@ -247,11 +242,7 @@ const Messages = () => {
                 rows={3}
                 className="flex-1 resize-none"
               />
-              <Button
-                onClick={handleSendMessage}
-                disabled={!newMessage.trim()}
-                size="icon"
-              >
+              <Button onClick={handleSendMessage} disabled={!newMessage.trim()} size="icon">
                 <Send className="h-4 w-4" />
               </Button>
             </div>
