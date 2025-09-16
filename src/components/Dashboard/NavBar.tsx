@@ -1,4 +1,3 @@
-// src/components/Navbar.tsx
 import React from 'react';
 import { TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,12 +5,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 
 const Navbar = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   return (
     <nav className="bg-card border-b border-border px-4 py-3 shadow-sm z-20">
       <div className="relative flex items-center justify-between">
-        {/* Botón hamburguesa - izquierda */}
         <div className="md:hidden z-10">
           <Button
             variant="outline"
@@ -38,7 +36,6 @@ const Navbar = () => {
           </Button>
         </div>
 
-        {/* Logo + Título - centrado y clickeable */}
         <Link
           to="/dashboard"
           className="absolute inset-0 flex items-center justify-center cursor-pointer"
@@ -54,7 +51,6 @@ const Navbar = () => {
           </div>
         </Link>
 
-        {/* Usuario - derecha (solo en desktop) */}
         <div className="hidden md:flex items-center gap-4 mr-2">
           <span className="text-sm text-foreground">
             Hola, <strong>{user?.nombre}</strong>
@@ -63,7 +59,7 @@ const Navbar = () => {
             size="sm"
             variant="ghost"
             onClick={() => {
-              // Aquí llamas a logout cuando lo tengas
+              void logout();
             }}
             className="text-foreground/70 hover:text-foreground"
           >
@@ -71,7 +67,6 @@ const Navbar = () => {
           </Button>
         </div>
 
-        {/* Espacio vacío a la derecha para balancear el botón hamburguesa */}
         <div className="w-10 md:hidden"></div>
       </div>
     </nav>
