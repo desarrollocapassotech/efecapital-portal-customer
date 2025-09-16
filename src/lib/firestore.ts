@@ -10,17 +10,22 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where,
   writeBatch,
 } from "firebase/firestore";
 
 import { db } from "./firebase";
 
+// -----------------------------
+// Tipos (se mantienen en español)
+// -----------------------------
 export type TipoInversor = "conservador" | "moderado" | "agresivo";
 
 export interface Broker {
@@ -28,7 +33,7 @@ export interface Broker {
   nombre: string;
   email?: string;
   telefono?: string;
-  empresa?: string;
+  empresa?: string; // se guarda en notes del broker si querés persistirla
 }
 
 export interface Archivo {
@@ -45,7 +50,7 @@ export interface Message {
   id: string;
   clienteId: string;
   contenido: string;
-  fecha: string;
+  fecha: string; // ISO
   remitente: "cliente" | "asesora";
   estado: "pendiente" | "respondido" | "en_revision" | "enviado";
   leido: boolean;
@@ -61,220 +66,199 @@ export interface ClienteProfile {
   tipoInversor: TipoInversor;
   objetivos: string;
   horizonte: string;
-  brokerId?: string | null;
+  brokerId?: string | null;    // mapeado desde 'broker' (texto) si existiera coincidencia
   broker?: Broker | null;
 }
 
-const clientesCollection = collection(db, "clientes");
-const brokersCollection = collection(db, "brokers");
-const mensajesCollection = collection(db, "mensajes");
-
-const parseString = (value: unknown): string => {
-  if (typeof value === "string") {
-    return value;
+// -----------------------------
+// Helpers
+// -----------------------------
+const toDate = (value: unknown): Date => {
+  if (value instanceof Timestamp) return value.toDate();
+  if (value instanceof Date) return value;
+  if (typeof value === "string" || typeof value === "number") {
+    const d = new Date(value);
+    if (!Number.isNaN(d.getTime())) return d;
   }
-  return "";
+  return new Date();
 };
 
+const toISO = (value: unknown): string => toDate(value).toISOString();
+
+const parseString = (value: unknown): string =>
+  typeof value === "string" ? value : "";
+
 const parseOptionalString = (value: unknown): string | undefined => {
-  const parsed = parseString(value).trim();
-  return parsed ? parsed : undefined;
+  const v = parseString(value).trim();
+  return v ? v : undefined;
 };
 
 const parseTipoInversor = (value: unknown): TipoInversor => {
-  if (value === "conservador" || value === "moderado" || value === "agresivo") {
-    return value;
-  }
+  if (value === "conservador" || value === "moderado" || value === "agresivo") return value;
   return "moderado";
 };
 
-const parseEstadoMensaje = (
-  value: unknown,
-): Message["estado"] => {
-  if (
-    value === "pendiente" ||
-    value === "respondido" ||
-    value === "en_revision" ||
-    value === "enviado"
-  ) {
-    return value;
-  }
-  return "enviado";
+const parseEstadoMensaje = (value: unknown): Message["estado"] => {
+  const allowed = new Set(["pendiente", "respondido", "en_revision", "enviado"]);
+  const v = parseString(value);
+  return (allowed.has(v) ? (v as Message["estado"]) : "enviado");
 };
 
-const buildBroker = (snapshot: DocumentSnapshot<DocumentData>): Broker => {
-  const data = snapshot.data() ?? {};
+const normalizeNotes = (value: unknown): Array<{ text: string; date: string }> => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((n) => n && typeof n === "object")
+    .map((n) => {
+      const r = n as { text?: unknown; date?: unknown };
+      return {
+        text: parseString(r.text),
+        date: typeof r.date === "string" ? r.date : toISO(r.date),
+      };
+    });
+};
 
+const guessNameParts = (user: FirebaseAuthUser) => {
+  const displayName = user.displayName ?? "";
+  const parts = displayName.split(" ").map((p) => p.trim()).filter(Boolean);
+  const firstName = parts[0] ?? (user.email ? user.email.split("@")[0] : "");
+  const lastName = parts.slice(1).join(" ");
+  return { firstName, lastName };
+};
+
+// -----------------------------
+// Colecciones (canónicas del store de referencia)
+// -----------------------------
+const clientsCol = collection(db, "clients");
+const brokersCol = collection(db, "brokers");
+const messagesCol = collection(db, "messages");
+
+// -----------------------------
+// Brokers
+// -----------------------------
+const buildBrokerFromSnapshot = (snap: DocumentSnapshot<DocumentData>): Broker => {
+  const data = snap.data() ?? {};
   return {
-    id: snapshot.id,
-    nombre: parseString(data.nombre) || "Bróker",
+    id: snap.id,
+    nombre: parseString(data.name) || "Bróker",
     email: parseOptionalString(data.email),
-    telefono: parseOptionalString(data.telefono),
-    empresa: parseOptionalString(data.empresa),
+    telefono: parseOptionalString(data.phone),
+    empresa: parseOptionalString(data.notes), // opcional: usamos 'notes' para empresa
   };
 };
 
 export const getBrokerById = async (brokerId: string): Promise<Broker | null> => {
-  if (!brokerId) {
-    return null;
-  }
-
-  const brokerRef = doc(brokersCollection, brokerId);
-  const snapshot = await getDoc(brokerRef);
-
-  if (!snapshot.exists()) {
-    return null;
-  }
-
-  return buildBroker(snapshot);
+  if (!brokerId) return null;
+  const ref = doc(brokersCol, brokerId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
+  return buildBrokerFromSnapshot(snap);
 };
 
-const parseArchivo = (value: unknown): Archivo | null => {
-  if (!value || typeof value !== "object") {
-    return null;
-  }
+// Busca o crea broker por nombre (para mantener consistencia como en el store)
+const ensureBrokerExistsByName = async (nameRaw: string): Promise<string | null> => {
+  const name = nameRaw.trim();
+  if (!name) return null;
 
-  const raw = value as Record<string, unknown>;
-  const nombre = parseString(raw.nombre) || "Documento";
-  const url = parseString(raw.url);
+  // cache por consulta directa
+  const q = query(brokersCol, where("name", "==", name));
+  const s = await getDocs(q);
+  if (!s.empty) return s.docs[0].id;
 
-  const archivo: Archivo = {
-    nombre,
-    url,
-  };
-
-  const id = parseOptionalString(raw.id);
-  if (id) {
-    archivo.id = id;
-  }
-
-  const tipo = parseOptionalString(raw.tipo);
-  if (tipo) {
-    archivo.tipo = tipo;
-  }
-
-  const comentario = parseOptionalString(raw.comentario);
-  if (comentario) {
-    archivo.comentario = comentario;
-  }
-
-  const tamaño = parseOptionalString(raw.tamaño);
-  if (tamaño) {
-    archivo.tamaño = tamaño;
-  }
-
-  const fechaSubida = parseOptionalString(raw.fechaSubida);
-  if (fechaSubida) {
-    archivo.fechaSubida = fechaSubida;
-  }
-
-  return archivo;
+  const docRef = await addDoc(brokersCol, { name });
+  return docRef.id;
 };
 
-const mapClienteSnapshot = async (
-  snapshot: DocumentSnapshot<DocumentData>,
-): Promise<ClienteProfile> => {
-  const data = snapshot.data() ?? {};
-  const brokerIdRaw = parseString(data.brokerId);
-  const brokerId = brokerIdRaw ? brokerIdRaw : null;
-  const broker = brokerId ? await getBrokerById(brokerId) : null;
+// -----------------------------
+// Clients
+// -----------------------------
+const mapClientSnapshot = async (snap: DocumentSnapshot<DocumentData>): Promise<ClienteProfile> => {
+  const data = snap.data() ?? {};
+  const brokerName = parseString(data.broker); // en esquema canónico broker es string (nombre)
+  let brokerId: string | null = null;
+  let broker: Broker | null = null;
+
+  if (brokerName) {
+    // intentamos resolver a un broker real por nombre
+    const q = query(brokersCol, where("name", "==", brokerName));
+    const r = await getDocs(q);
+    if (!r.empty) {
+      brokerId = r.docs[0].id;
+      broker = buildBrokerFromSnapshot(r.docs[0]);
+    }
+  }
 
   return {
-    id: snapshot.id,
-    nombre: parseString(data.nombre),
-    apellido: parseString(data.apellido),
+    id: snap.id,
+    nombre: parseString(data.firstName),
+    apellido: parseString(data.lastName),
     email: parseString(data.email),
-    telefono: parseString(data.telefono),
-    tipoInversor: parseTipoInversor(data.tipoInversor),
-    objetivos: parseString(data.objetivos),
-    horizonte: parseString(data.horizonte),
+    telefono: parseString(data.phone),
+    tipoInversor: parseTipoInversor(data.investorProfile),
+    objetivos: parseString(data.objectives),
+    horizonte: parseString(data.investmentHorizon),
     brokerId,
     broker,
   };
 };
 
-const guessNameParts = (user: FirebaseAuthUser) => {
-  const displayName = user.displayName ?? "";
-  const parts = displayName
-    .split(" ")
-    .map((part) => part.trim())
-    .filter(Boolean);
+export const ensureClientProfile = async (firebaseUser: FirebaseAuthUser): Promise<ClienteProfile> => {
+  const clientRef = doc(clientsCol, firebaseUser.uid);
+  const snap = await getDoc(clientRef);
 
-  const firstName = parts[0] ?? (user.email ? user.email.split("@")[0] ?? "" : "");
-  const lastName = parts.slice(1).join(" ") ?? "";
-
-  return { firstName, lastName };
-};
-
-export const ensureClientProfile = async (
-  firebaseUser: FirebaseAuthUser,
-): Promise<ClienteProfile> => {
-  const clientRef = doc(clientesCollection, firebaseUser.uid);
-  const snapshot = await getDoc(clientRef);
-
-  if (!snapshot.exists()) {
+  if (!snap.exists()) {
     const { firstName, lastName } = guessNameParts(firebaseUser);
 
-    const newProfile: ClienteProfile = {
+    const newDoc = {
+      firstName,
+      lastName,
+      email: firebaseUser.email ?? "",
+      phone: firebaseUser.phoneNumber ?? "",
+      investorProfile: "moderado",
+      objectives: "",
+      investmentHorizon: "",
+      broker: "", // nombre, opcional
+      notes: [],
+      lastContact: serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+
+    await setDoc(clientRef, newDoc);
+    return {
       id: firebaseUser.uid,
       nombre: firstName,
       apellido: lastName,
-      email: firebaseUser.email ?? "",
-      telefono: firebaseUser.phoneNumber ?? "",
+      email: newDoc.email,
+      telefono: newDoc.phone,
       tipoInversor: "moderado",
       objetivos: "",
       horizonte: "",
       brokerId: null,
       broker: null,
     };
-
-    await setDoc(clientRef, {
-      nombre: newProfile.nombre,
-      apellido: newProfile.apellido,
-      email: newProfile.email,
-      telefono: newProfile.telefono,
-      tipoInversor: newProfile.tipoInversor,
-      objetivos: newProfile.objetivos,
-      horizonte: newProfile.horizonte,
-      brokerId: newProfile.brokerId,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-
-    return newProfile;
   }
 
-  const profile = await mapClienteSnapshot(snapshot);
+  // si existe, mapeamos y completamos faltantes
+  const profile = await mapClientSnapshot(snap);
   const updates: Record<string, unknown> = {};
 
   if (!profile.nombre) {
     const { firstName } = guessNameParts(firebaseUser);
     profile.nombre = firstName;
-    if (firstName) {
-      updates.nombre = firstName;
-    }
+    if (firstName) updates.firstName = firstName;
   }
-
   if (!profile.apellido) {
     const { lastName } = guessNameParts(firebaseUser);
     profile.apellido = lastName;
-    if (lastName) {
-      updates.apellido = lastName;
-    }
+    if (lastName) updates.lastName = lastName;
   }
-
   if (!profile.email && firebaseUser.email) {
     profile.email = firebaseUser.email;
     updates.email = firebaseUser.email;
   }
-
   if (!profile.telefono && firebaseUser.phoneNumber) {
     profile.telefono = firebaseUser.phoneNumber;
-    updates.telefono = firebaseUser.phoneNumber;
-  }
-
-  if (!snapshot.data()?.tipoInversor) {
-    updates.tipoInversor = profile.tipoInversor;
+    updates.phone = firebaseUser.phoneNumber;
   }
 
   if (Object.keys(updates).length > 0) {
@@ -285,127 +269,180 @@ export const ensureClientProfile = async (
   return profile;
 };
 
+// -----------------------------
+// Messages (adaptador a esquema canónico)
+// -----------------------------
+const parseArchivo = (value: unknown): Archivo | null => {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+  const nombre = parseString(raw.nombre) || "Documento";
+  const url = parseString(raw.url);
+  const archivo: Archivo = { nombre, url };
+
+  const id = parseOptionalString(raw.id); if (id) archivo.id = id;
+  const tipo = parseOptionalString(raw.tipo); if (tipo) archivo.tipo = tipo;
+  const comentario = parseOptionalString(raw.comentario); if (comentario) archivo.comentario = comentario;
+  const tamaño = parseOptionalString(raw.tamaño); if (tamaño) archivo.tamaño = tamaño;
+  const fechaSubida = parseOptionalString(raw.fechaSubida); if (fechaSubida) archivo.fechaSubida = fechaSubida;
+
+  return archivo;
+};
+
+// Convierte documento del esquema canónico -> tipo Message (español)
 const mapMessageSnapshot = (
   snapshot: QueryDocumentSnapshot<DocumentData>,
 ): Message | null => {
   const data = snapshot.data();
-  const clienteId = parseString(data.clienteId);
+  const clientId = parseString(data.clientId);
+  if (!clientId) return null;
 
-  if (!clienteId) {
-    return null;
-  }
+  // timestamp canónico -> fecha ISO
+  const fecha = toISO(data.timestamp);
 
-  const fechaValue = data.fecha;
-  let fecha: string;
+  // isFromAdvisor:boolean -> remitente
+  const remitente: Message["remitente"] = data.isFromAdvisor ? "asesora" : "cliente";
 
-  if (fechaValue instanceof Timestamp) {
-    fecha = fechaValue.toDate().toISOString();
-  } else if (typeof fechaValue === "string") {
-    fecha = new Date(fechaValue).toISOString();
-  } else {
-    fecha = new Date().toISOString();
-  }
+  // status canónico (usamos tus valores)
+  const estado = parseEstadoMensaje(data.status);
 
+  // archivo opcional (si lo guardás colgando del mensaje)
   const archivo = parseArchivo(data.archivo);
 
   return {
     id: snapshot.id,
-    clienteId,
-    contenido: parseString(data.contenido),
+    clienteId: clientId,
+    contenido: parseString(data.content),
     fecha,
-    remitente: data.remitente === "asesora" ? "asesora" : "cliente",
-    estado: parseEstadoMensaje(data.estado),
-    leido: Boolean(data.leido),
+    remitente,
+    estado,
+    leido: Boolean(data.read),
     ...(archivo ? { archivo } : {}),
   };
 };
 
+// Suscripción a mensajes de un cliente (colección canónica 'messages')
 export const subscribeToClientMessages = (
   clienteId: string,
   onData: (messages: Message[]) => void,
   onError?: (error: FirestoreError) => void,
 ): Unsubscribe => {
-  const messagesQuery = query(
-    mensajesCollection,
-    where("clienteId", "==", clienteId),
-    orderBy("fecha", "asc"),
+  const qy = query(
+    messagesCol,
+    where("clientId", "==", clienteId),
+    orderBy("timestamp", "asc"),
   );
 
   return onSnapshot(
-    messagesQuery,
+    qy,
     (snapshot) => {
       const messages = snapshot.docs
         .map(mapMessageSnapshot)
-        .filter((message): message is Message => message !== null)
-        .sort(
-          (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
-        );
-
+        .filter((m): m is Message => m !== null)
+        .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
       onData(messages);
     },
     onError,
   );
 };
 
-export const sendClientMessage = async (
-  clienteId: string,
-  contenido: string,
-): Promise<void> => {
+// Enviar mensaje como CLIENTE (remitente = "cliente")
+export const sendClientMessage = async (clienteId: string, contenido: string): Promise<void> => {
   const text = contenido.trim();
+  if (!text) return;
 
-  if (!text) {
-    return;
-  }
-
-  await addDoc(mensajesCollection, {
-    clienteId,
-    contenido: text,
-    remitente: "cliente",
-    estado: "enviado",
-    leido: true,
-    fecha: serverTimestamp(),
+  await addDoc(messagesCol, {
+    clientId: clienteId,
+    content: text,
+    isFromAdvisor: false,
+    status: "enviado",
+    read: false, // el asesor no lo leyó aún
+    timestamp: serverTimestamp(),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+
+  // actualizamos lastContact del cliente (igual que el store)
+  const clientRef = doc(clientsCol, clienteId);
+  await updateDoc(clientRef, { lastContact: serverTimestamp() });
 };
 
-export const markMessagesAsRead = async (
-  messageIds: string[],
-): Promise<void> => {
-  if (messageIds.length === 0) {
-    return;
-  }
-
+// Marcar mensajes como leídos (set read=true)
+export const markMessagesAsRead = async (messageIds: string[]): Promise<void> => {
+  if (!messageIds.length) return;
   const batch = writeBatch(db);
-
-  messageIds.forEach((messageId) => {
-    const messageRef = doc(mensajesCollection, messageId);
-    batch.update(messageRef, {
-      leido: true,
-      updatedAt: serverTimestamp(),
-    });
+  messageIds.forEach((id) => {
+    const ref = doc(messagesCol, id);
+    batch.update(ref, { read: true, updatedAt: serverTimestamp() });
   });
-
   await batch.commit();
 };
 
+// Contador de no leídos del remitente "asesora" (isFromAdvisor = true)
 export const subscribeToUnreadMessagesCount = (
   clienteId: string,
   onData: (count: number) => void,
   onError?: (error: FirestoreError) => void,
 ): Unsubscribe => {
-  const unreadQuery = query(
-    mensajesCollection,
-    where("clienteId", "==", clienteId),
-    where("remitente", "==", "asesora"),
-    where("leido", "==", false),
+  const qy = query(
+    messagesCol,
+    where("clientId", "==", clienteId),
+    where("isFromAdvisor", "==", true),
+    where("read", "==", false),
   );
 
   return onSnapshot(
-    unreadQuery,
-    (snapshot) => {
-      onData(snapshot.size);
-    },
+    qy,
+    (snapshot) => onData(snapshot.size),
     onError,
+  );
+};
+
+// -----------------------------
+// Utilidades para crear/actualizar cliente con esquema canónico
+// -----------------------------
+export const upsertClienteCanonic = async (cliente: {
+  id: string;
+  nombre: string;
+  apellido: string;
+  email: string;
+  telefono: string;
+  tipoInversor: TipoInversor;
+  objetivos: string;
+  horizonte: string;
+  brokerNombre?: string; // se guarda como 'broker' (texto)
+  notes?: Array<{ text: string; date?: string | Date }>;
+}) => {
+  if (!cliente.id) return;
+
+  if (cliente.brokerNombre) {
+    // opcional: nos aseguramos que exista un broker con ese nombre (como en tu store)
+    await ensureBrokerExistsByName(cliente.brokerNombre);
+  }
+
+  const ref = doc(clientsCol, cliente.id);
+  await setDoc(
+    ref,
+    {
+      firstName: cliente.nombre,
+      lastName: cliente.apellido,
+      email: cliente.email,
+      phone: cliente.telefono,
+      investorProfile: cliente.tipoInversor,
+      objectives: cliente.objetivos,
+      investmentHorizon: cliente.horizonte,
+      broker: cliente.brokerNombre ?? "",
+      notes:
+        (cliente.notes ?? []).map((n) => ({
+          text: n.text ?? "",
+          date:
+            typeof n.date === "string"
+              ? n.date
+              : n.date instanceof Date
+              ? n.date.toISOString()
+              : new Date().toISOString(),
+        })) ?? [],
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
   );
 };

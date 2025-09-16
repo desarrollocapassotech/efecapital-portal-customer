@@ -4,13 +4,13 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA6FXXWhtaxY6ocwmdbXNg35zbmJbJCNfc",
-  authDomain: "efecapitalportal.firebaseapp.com",
-  projectId: "efecapitalportal",
-  storageBucket: "efecapitalportal.firebasestorage.app",
-  messagingSenderId: "788811289194",
-  appId: "1:788811289194:web:ca7f75d58be92fae4b7013",
-  measurementId: "G-RJLP7WJPK2",
+  apiKey: "AIzaSyDkaS-o_CBxK-MWnU6-iH7sit4EbjmAcDo",
+  authDomain: "efecapitaladmin.firebaseapp.com",
+  projectId: "efecapitaladmin",
+  storageBucket: "efecapitaladmin.firebasestorage.app",
+  messagingSenderId: "855812027696",
+  appId: "1:855812027696:web:5315b7bc85665ea5a044f5",
+  measurementId: "G-0CNRPQ2XBC",
 };
 
 const app = initializeApp(firebaseConfig);
