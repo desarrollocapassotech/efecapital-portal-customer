@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, TrendingUp } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { Loader2, TrendingUp } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { FirebaseError } from "firebase/app";
 
 const LoginForm = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
 
@@ -18,19 +19,33 @@ const LoginForm = () => {
     setIsLoading(true);
 
     try {
-      const success = await login(email, password);
-      if (!success) {
-        toast({
-          title: "Error de autenticación",
-          description: "Email o contraseña incorrectos",
-          variant: "destructive"
-        });
-      }
+      await login(email, password);
     } catch (error) {
+      let description = "Email o contraseña incorrectos";
+
+      if (error instanceof FirebaseError) {
+        switch (error.code) {
+          case "auth/invalid-credential":
+          case "auth/wrong-password":
+          case "auth/user-not-found":
+            description = "Email o contraseña incorrectos";
+            break;
+          case "auth/too-many-requests":
+            description = "Demasiados intentos. Intenta nuevamente más tarde.";
+            break;
+          case "auth/network-request-failed":
+            description = "Error de conexión. Revisa tu red e intenta otra vez.";
+            break;
+          default:
+            description = "No se pudo iniciar sesión. Intenta nuevamente.";
+            break;
+        }
+      }
+
       toast({
-        title: "Error",
-        description: "Ocurrió un error inesperado",
-        variant: "destructive"
+        title: "Error de autenticación",
+        description,
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -38,8 +53,8 @@ const LoginForm = () => {
   };
 
   const fillDemoCredentials = () => {
-    setEmail('maria.gonzalez@email.com');
-    setPassword('password123');
+    setEmail("maria.gonzalez@email.com");
+    setPassword("password123");
   };
 
   return (
@@ -93,9 +108,9 @@ const LoginForm = () => {
                   className="h-11"
                 />
               </div>
-              
-              <Button 
-                type="submit" 
+
+              <Button
+                type="submit"
                 className="w-full h-11 bg-gradient-to-r from-primary to-financial-blue hover:opacity-90 transition-opacity"
                 disabled={isLoading}
               >
@@ -105,7 +120,7 @@ const LoginForm = () => {
                     Iniciando sesión...
                   </>
                 ) : (
-                  'Iniciar sesión'
+                  "Iniciar sesión"
                 )}
               </Button>
             </form>
@@ -114,15 +129,16 @@ const LoginForm = () => {
               <div className="text-sm text-muted-foreground mb-3">
                 Credenciales de demostración:
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={fillDemoCredentials}
                 className="w-full text-sm"
               >
                 Usar credenciales demo
               </Button>
               <div className="mt-2 text-xs text-muted-foreground">
-                Email: maria.gonzalez@email.com<br />
+                Email: maria.gonzalez@email.com
+                <br />
                 Contraseña: password123
               </div>
             </div>
