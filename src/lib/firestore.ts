@@ -26,7 +26,7 @@ import { db } from "./firebase";
 // -----------------------------
 // Tipos (se mantienen en español)
 // -----------------------------
-export type TipoInversor = "conservador" | "moderado" | "agresivo";
+export type TipoInversor = "Conservador" | "Moderado" | "Agresivo";
 
 export interface Broker {
   id: string;
@@ -94,8 +94,8 @@ const parseOptionalString = (value: unknown): string | undefined => {
 };
 
 const parseTipoInversor = (value: unknown): TipoInversor => {
-  if (value === "conservador" || value === "moderado" || value === "agresivo") return value;
-  return "moderado";
+  if (value === "Conservador" || value === "Moderado" || value === "Agresivo") return value;
+  return "Moderado";
 };
 
 const parseEstadoMensaje = (value: unknown): Message["estado"] => {
@@ -213,7 +213,7 @@ export const ensureClientProfile = async (firebaseUser: FirebaseAuthUser): Promi
       lastName,
       email: firebaseUser.email ?? "",
       phone: firebaseUser.phoneNumber ?? "",
-      investorProfile: "moderado",
+      investorProfile: "Moderado",
       objectives: "",
       investmentHorizon: "",
       broker: "", // nombre, opcional
@@ -230,7 +230,7 @@ export const ensureClientProfile = async (firebaseUser: FirebaseAuthUser): Promi
       apellido: lastName,
       email: newDoc.email,
       telefono: newDoc.phone,
-      tipoInversor: "moderado",
+      tipoInversor: "Moderado",
       objetivos: "",
       horizonte: "",
       brokerId: null,
