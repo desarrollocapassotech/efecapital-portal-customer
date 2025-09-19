@@ -72,16 +72,16 @@ const DashboardHome = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Target className="h-5 w-5" />
-            Objetivos de inversión
+            Tus objetivos de inversión
           </CardTitle>
-          <CardDescription>
-            Visualiza los objetivos que definiste junto a tu asesora
-          </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground leading-relaxed">
-            {user?.objetivos || "Comparte tus objetivos financieros con tu asesora para recibir recomendaciones personalizadas."}
-          </p>
+          <div
+            className="text-muted-foreground leading-relaxed prose prose-sm max-w-none"
+            dangerouslySetInnerHTML={{
+              __html: user?.objetivos || "Comparte tus objetivos financieros con tu asesora para recibir recomendaciones personalizadas."
+            }}
+          />
         </CardContent>
       </Card>
     </div>
