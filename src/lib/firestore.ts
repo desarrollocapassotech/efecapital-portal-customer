@@ -54,6 +54,7 @@ export interface Message {
   remitente: "cliente" | "asesora";
   estado: "pendiente" | "respondido" | "en_revision" | "enviado";
   leido: boolean;
+  visto: boolean;
   archivo?: Archivo;
 }
 
@@ -316,6 +317,7 @@ const mapMessageSnapshot = (
     remitente,
     estado,
     leido: Boolean(data.read),
+    visto: Boolean(data.seen ?? data.visto),
     ...(archivo ? { archivo } : {}),
   };
 };
@@ -356,6 +358,7 @@ export const sendClientMessage = async (clienteId: string, contenido: string): P
     isFromAdvisor: false,
     status: "enviado",
     read: false, // el asesor no lo leyó aún
+    seen: false,
     timestamp: serverTimestamp(),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
