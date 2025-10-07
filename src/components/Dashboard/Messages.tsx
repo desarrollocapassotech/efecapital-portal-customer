@@ -190,8 +190,7 @@ const Messages = () => {
           <MessageSquare className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold">Chat con tu Asesora</h1>
-          <p className="text-muted-foreground">Laura Pérez • Asesora Financiera</p>
+          <h1 className="text-3xl font-bold">Chat con tu asesora</h1>
         </div>
       </div>
 
@@ -218,7 +217,7 @@ const Messages = () => {
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium">
-                        {msg.remitente === "cliente" ? "Tú" : "Asesora"}
+                        {msg.remitente === "cliente" ? "Tú" : "Florencia Foos"}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {format(new Date(msg.fecha), "dd/MM HH:mm", { locale: es })}
