@@ -12,26 +12,54 @@ const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({ email: "", password: "" });
   const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const validationErrors = { email: "", password: "" };
+
+    if (!email.trim()) {
+      validationErrors.email = "Ingresa tu correo electrónico.";
+    } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/.test(email.trim())) {
+      validationErrors.email = "Formato de correo inválido.";
+    }
+
+    if (!password) {
+      validationErrors.password = "Ingresa tu contraseña.";
+    }
+
+    const hasErrors = Object.values(validationErrors).some(Boolean);
+
+    if (hasErrors) {
+      setErrors(validationErrors);
+      return;
+    }
+
     setIsLoading(true);
+    setErrors({ email: "", password: "" });
 
     try {
-      await login(email, password);
+      await login(email.trim(), password);
     } catch (error) {
       let description = "Email o contraseña incorrectos";
+      const fieldErrors = { email: "", password: "" };
 
       if (error instanceof FirebaseError) {
         switch (error.code) {
           case "auth/invalid-credential":
           case "auth/wrong-password":
+            fieldErrors.password = "Email o contraseña incorrectos.";
+            description = fieldErrors.password;
+            break;
           case "auth/user-not-found":
-            description = "Email o contraseña incorrectos";
+            fieldErrors.email = "No encontramos una cuenta con este correo.";
+            description = fieldErrors.email;
             break;
           case "auth/too-many-requests":
-            description = "Demasiados intentos. Intenta nuevamente más tarde.";
+            fieldErrors.password =
+              "Demasiados intentos. Intenta nuevamente más tarde.";
+            description = fieldErrors.password;
             break;
           case "auth/network-request-failed":
             description = "Error de conexión. Revisa tu red e intenta otra vez.";
@@ -41,6 +69,8 @@ const LoginForm = () => {
             break;
         }
       }
+
+      setErrors((prev) => ({ ...prev, ...fieldErrors }));
 
       toast({
         title: "Error de autenticación",
@@ -92,10 +122,18 @@ const LoginForm = () => {
                   type="email"
                   placeholder="tu@email.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) {
+                      setErrors((prev) => ({ ...prev, email: "" }));
+                    }
+                  }}
                   required
                   className="h-11"
                 />
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Contraseña</Label>
@@ -103,10 +141,18 @@ const LoginForm = () => {
                   id="password"
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) {
+                      setErrors((prev) => ({ ...prev, password: "" }));
+                    }
+                  }}
                   required
                   className="h-11"
                 />
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password}</p>
+                )}
               </div>
 
               <Button
