@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { AlertTriangle, Download, FileBarChart, Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { subscribeToClientReports, type Report } from "@/lib/firestore";
@@ -76,6 +77,15 @@ const Reports: React.FC = () => {
     if (!report || !report.archivo?.url) return;
     window.open(report.archivo.url, "_blank", "noopener,noreferrer");
   };
+
+  const handleClearFilters = () => {
+    setNameFilter("");
+    setStartDate("");
+    setEndDate("");
+  };
+
+  const hasActiveFilters =
+    nameFilter.trim().length > 0 || startDate !== "" || endDate !== "";
 
   return (
     <div className="mt-8 space-y-6">
@@ -183,8 +193,23 @@ const Reports: React.FC = () => {
               </TableBody>
             </Table>
           ) : (
-            <div className="rounded-lg border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
-              No encontramos informes con los filtros seleccionados.
+            <div className="rounded-lg border border-dashed border-border py-10 text-center">
+              <p className="text-sm text-muted-foreground">
+                No encontramos informes con los filtros seleccionados. Puedes solicitar
+                un nuevo informe o ajustar tus filtros para ver otros resultados.
+              </p>
+              <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Button asChild>
+                  <Link to="/dashboard/messages">Solicitar nuevo informe</Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleClearFilters}
+                  disabled={!hasActiveFilters}
+                >
+                  Limpiar filtros
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
