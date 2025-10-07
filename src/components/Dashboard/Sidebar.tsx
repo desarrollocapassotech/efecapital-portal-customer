@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Home, MessageSquare, LogOut, FileBarChart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,12 +17,50 @@ const Sidebar = () => {
   const { logout, user } = useAuth();
   const { unreadCount } = useUnreadMessages();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const originalOverflowRef = useRef<string>("");
 
   useEffect(() => {
     const toggleMenu = () => setIsMenuOpen((prev) => !prev);
     window.addEventListener("toggle-sidebar", toggleMenu);
     return () => window.removeEventListener("toggle-sidebar", toggleMenu);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const body = document.body;
+
+    if (isMenuOpen && window.innerWidth < 768) {
+      originalOverflowRef.current = body.style.overflow;
+      body.style.overflow = "hidden";
+      closeButtonRef.current?.focus();
+    } else {
+      body.style.overflow = originalOverflowRef.current || "";
+    }
+
+    return () => {
+      body.style.overflow = originalOverflowRef.current || "";
+    };
+  }, [isMenuOpen]);
 
   const handleLinkClick = () => {
     if (window.innerWidth < 768) {
@@ -34,7 +72,8 @@ const Sidebar = () => {
     <>
       {isMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 sm:hidden"
+          className="fixed inset-0 z-30 bg-black/50 sm:hidden"
+          aria-hidden="true"
           onClick={() => setIsMenuOpen(false)}
         />
       )}
@@ -43,18 +82,34 @@ const Sidebar = () => {
         className={`fixed inset-y-0 left-0 z-40 w-64 bg-card text-foreground border-r border-border transform transition-transform duration-300 ease-in-out sm:translate-x-0 ${
           isMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
+        role={isMenuOpen ? "dialog" : undefined}
+        aria-modal={isMenuOpen ? true : undefined}
+        aria-label="Menú principal"
       >
-        <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-border">
-            <div className="bg-white/5 rounded-lg p-4">
-              <h3 className="font-medium text-sm">Bienvenido/a</h3>
-              <p className="text-foreground font-semibold">
-                {user?.nombre} {user?.apellido}
-              </p>
+        <div className="flex h-full flex-col">
+          <div className="border-b border-border p-6">
+            <div className="rounded-lg bg-white/5 p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-sm font-medium">Bienvenido/a</h3>
+                  <p className="font-semibold text-foreground">
+                    {user?.nombre} {user?.apellido}
+                  </p>
+                </div>
+                <Button
+                  ref={closeButtonRef}
+                  type="button"
+                  variant="ghost"
+                  className="h-8 px-3 py-1 text-sm font-medium sm:hidden"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Cerrar menú
+                </Button>
+              </div>
             </div>
           </div>
 
-          <nav className="flex-1 p-6 overflow-y-auto">
+          <nav className="flex-1 overflow-y-auto p-6">
             <ul className="space-y-2">
               {navigation.map((item) => {
                 const isActive = location.pathname === item.href;
@@ -85,7 +140,7 @@ const Sidebar = () => {
             </ul>
           </nav>
 
-          <div className="p-6 border-t border-border">
+          <div className="border-t border-border p-6">
             <Button
               onClick={() => {
                 void logout();
