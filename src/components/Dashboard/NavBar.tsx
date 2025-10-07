@@ -45,7 +45,7 @@ const Navbar = () => {
               <TrendingUp className="h-5 w-5 text-primary-foreground" />
             </div>
             <div className="text-center">
-              <h1 className="font-bold text-lg">AsesoresFin</h1>
+              <h1 className="font-bold text-lg">EFECapital</h1>
               <p className="text-xs text-muted-foreground">Panel Cliente</p>
             </div>
           </div>

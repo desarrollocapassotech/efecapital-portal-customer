@@ -26,22 +26,6 @@ const DashboardHome = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-primary to-financial-blue rounded-2xl p-8 text-white">
-        <div className="flex items-center gap-4">
-          <div className="bg-white/20 rounded-full p-4">
-            <User className="h-8 w-8" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">
-              ¡Hola, {user?.nombre}!
-            </h1>
-            <p className="text-white/90 text-lg">
-              Bienvenido/a a tu panel de inversiones
-            </p>
-          </div>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

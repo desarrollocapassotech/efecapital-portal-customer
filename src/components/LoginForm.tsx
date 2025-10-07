@@ -67,7 +67,7 @@ const LoginForm = () => {
             </div>
           </div>
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            AsesoresFin
+            EFECapital
           </h1>
           <p className="text-foreground/80">
             Tu plataforma de asesoría financiera
