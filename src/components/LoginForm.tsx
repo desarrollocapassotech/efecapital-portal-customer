@@ -14,26 +14,54 @@ const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [errors, setErrors] = useState({ email: "", password: "" });
   const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const validationErrors = { email: "", password: "" };
+
+    if (!email.trim()) {
+      validationErrors.email = "Ingresa tu correo electrónico.";
+    } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/.test(email.trim())) {
+      validationErrors.email = "Formato de correo inválido.";
+    }
+
+    if (!password) {
+      validationErrors.password = "Ingresa tu contraseña.";
+    }
+
+    const hasErrors = Object.values(validationErrors).some(Boolean);
+
+    if (hasErrors) {
+      setErrors(validationErrors);
+      return;
+    }
+
     setIsLoading(true);
+    setErrors({ email: "", password: "" });
 
     try {
-      await login(email, password);
+      await login(email.trim(), password);
     } catch (error) {
       let description = "Email o contraseña incorrectos";
+      const fieldErrors = { email: "", password: "" };
 
       if (error instanceof FirebaseError) {
         switch (error.code) {
           case "auth/invalid-credential":
           case "auth/wrong-password":
+            fieldErrors.password = "Email o contraseña incorrectos.";
+            description = fieldErrors.password;
+            break;
           case "auth/user-not-found":
-            description = "Email o contraseña incorrectos";
+            fieldErrors.email = "No encontramos una cuenta con este correo.";
+            description = fieldErrors.email;
             break;
           case "auth/too-many-requests":
-            description = "Demasiados intentos. Intenta nuevamente más tarde.";
+            fieldErrors.password =
+              "Demasiados intentos. Intenta nuevamente más tarde.";
+            description = fieldErrors.password;
             break;
           case "auth/network-request-failed":
             description = "Error de conexión. Revisa tu red e intenta otra vez.";
@@ -43,6 +71,8 @@ const LoginForm = () => {
             break;
         }
       }
+
+      setErrors((prev) => ({ ...prev, ...fieldErrors }));
 
       toast({
         title: "Error de autenticación",
@@ -94,10 +124,18 @@ const LoginForm = () => {
                   type="email"
                   placeholder="tu@email.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) {
+                      setErrors((prev) => ({ ...prev, email: "" }));
+                    }
+                  }}
                   required
                   className="h-11"
                 />
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -147,6 +185,9 @@ const LoginForm = () => {
                 >
                   Olvidé mi contraseña
                 </button>
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password}</p>
+                )}
               </div>
 
               <Button
@@ -164,24 +205,6 @@ const LoginForm = () => {
                 )}
               </Button>
             </form>
-
-            <div className="mt-6 text-center">
-              <div className="text-sm text-muted-foreground mb-3">
-                Credenciales de demostración:
-              </div>
-              <Button
-                variant="outline"
-                onClick={fillDemoCredentials}
-                className="w-full text-sm"
-              >
-                Usar credenciales demo
-              </Button>
-              <div className="mt-2 text-xs text-muted-foreground">
-                Email: maria.gonzalez@email.com
-                <br />
-                Contraseña: password123
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>
