@@ -102,6 +102,38 @@ const parseOptionalString = (value: unknown): string | undefined => {
   return v ? v : undefined;
 };
 
+const hasReportKeyword = (value: unknown): boolean => {
+  const text = parseOptionalString(value)?.toLowerCase();
+  if (!text) return false;
+
+  const keywords = ["report", "reports", "reporte", "reportes", "informe", "informes"];
+  return keywords.some((keyword) => text.includes(keyword));
+};
+
+const hasReportKeywordInCollection = (value: unknown): boolean => {
+  if (!value) return false;
+
+  if (Array.isArray(value)) {
+    return value.some((item) => hasReportKeyword(item));
+  }
+
+  if (value instanceof Set) {
+    return Array.from(value.values()).some((item) => hasReportKeyword(item));
+  }
+
+  if (value instanceof Map) {
+    return Array.from(value.values()).some((item) => hasReportKeyword(item));
+  }
+
+  if (typeof value === "object") {
+    return Object.values(value as Record<string, unknown>).some((item) =>
+      hasReportKeyword(item),
+    );
+  }
+
+  return hasReportKeyword(value);
+};
+
 const parseTipoInversor = (value: unknown): TipoInversor => {
   if (value === "Conservador" || value === "Moderado" || value === "Agresivo") return value;
   return "Moderado";
@@ -140,7 +172,7 @@ const guessNameParts = (user: FirebaseAuthUser) => {
 const clientsCol = collection(db, "clients");
 const brokersCol = collection(db, "brokers");
 const messagesCol = collection(db, "messages");
-const reportsCol = collection(db, "reports");
+const documentsCol = collection(db, "documents");
 
 // -----------------------------
 // Brokers
@@ -361,6 +393,103 @@ const parseArchivoFlexible = (value: unknown, fallbackName = "Informe"): Archivo
   return archivo;
 };
 
+const toOptionalIdString = (value: unknown): string | undefined => {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : undefined;
+  }
+
+  if (typeof value === "number") {
+    return String(value);
+  }
+
+  return undefined;
+};
+
+const matchesTargetClient = (value: unknown, target: string): boolean => {
+  if (value == null) return false;
+
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value) === target;
+  }
+
+  if (Array.isArray(value)) {
+    return value.some((item) => matchesTargetClient(item, target));
+  }
+
+  if (typeof value === "object") {
+    const raw = value as Record<string, unknown>;
+
+    const typeCandidate = toOptionalIdString(raw.type)?.toLowerCase();
+    if (typeCandidate === "client" || typeCandidate === "cliente") {
+      const candidate =
+        toOptionalIdString(raw.id) ??
+        toOptionalIdString(raw.clientId) ??
+        toOptionalIdString(raw.clienteId) ??
+        toOptionalIdString(raw.value);
+      if (candidate && candidate === target) {
+        return true;
+      }
+    }
+
+    const keysToCheck = [
+      "id",
+      "clientId",
+      "clienteId",
+      "value",
+      "uid",
+      "userId",
+      "cliente",
+      "client",
+    ];
+
+    return keysToCheck.some((key) => matchesTargetClient(raw[key], target));
+  }
+
+  return false;
+};
+
+const resolveClientIdFromData = (
+  data: DocumentData,
+  targetClientId?: string,
+): string | null => {
+  const directKeys = [
+    "clientId",
+    "clienteId",
+    "client_id",
+    "cliente_id",
+    "client",
+    "cliente",
+  ];
+
+  for (const key of directKeys) {
+    const candidate = toOptionalIdString(data[key]);
+    if (candidate) {
+      return candidate;
+    }
+  }
+
+  if (!targetClientId) {
+    return null;
+  }
+
+  const candidateContainers = [
+    data.clients,
+    data.clientes,
+    data.clientIds,
+    data.clienteIds,
+    data.sharedWith,
+    data.shareTo,
+    data.visibleTo,
+  ];
+
+  const matches = candidateContainers.some((value) =>
+    matchesTargetClient(value, targetClientId),
+  );
+
+  return matches ? targetClientId : null;
+};
+
 const buildArchivoFromFields = (
   fallbackName: string,
   url?: string,
@@ -399,9 +528,55 @@ const buildArchivoFromFields = (
 
 const mapReportSnapshot = (
   snapshot: QueryDocumentSnapshot<DocumentData>,
+  targetClientId?: string,
 ): Report | null => {
   const data = snapshot.data();
-  const clientId = parseString(data.clientId ?? data.clienteId);
+
+  const isReport = (() => {
+    if (typeof data.isReport === "boolean") return data.isReport;
+    if (typeof data.esInforme === "boolean") return data.esInforme;
+
+    const typeCandidates = [
+      data.type,
+      data.tipo,
+      data.category,
+      data.categoria,
+      data.documentType,
+      data.document_type,
+      data.kind,
+      data.folder,
+      data.section,
+    ];
+
+    if (typeCandidates.some((candidate) => hasReportKeyword(candidate))) {
+      return true;
+    }
+
+    const labelCandidates = [
+      data.tags,
+      data.labels,
+      data.categorias,
+      data.categories,
+      data.etiquetas,
+      data.metadata,
+    ];
+
+    if (labelCandidates.some((candidate) => hasReportKeywordInCollection(candidate))) {
+      return true;
+    }
+
+    if (typeCandidates.some((candidate) => parseOptionalString(candidate))) {
+      return false;
+    }
+
+    return true;
+  })();
+
+  if (!isReport) {
+    return null;
+  }
+
+  const clientId = resolveClientIdFromData(data, targetClientId);
   if (!clientId) return null;
 
   const nombreRaw =
@@ -469,18 +644,21 @@ export const subscribeToClientReports = (
     return () => undefined;
   }
 
-  const qy = query(reportsCol, where("clientId", "==", clienteId));
-
   return onSnapshot(
-    qy,
+    documentsCol,
     (snapshot) => {
       const reports = snapshot.docs
-        .map(mapReportSnapshot)
+        .map((doc) => mapReportSnapshot(doc, clienteId))
         .filter((report): report is Report => report !== null)
         .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+
       onData(reports);
     },
-    onError,
+    (error) => {
+      if (onError) {
+        onError(error);
+      }
+    },
   );
 };
 
