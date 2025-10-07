@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { subscribeToUnreadMessagesCount } from "@/lib/firestore";
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Comunicaciones", href: "/dashboard/messages", icon: MessageSquare },
+  { name: "Inicio", href: "/dashboard", icon: Home },
+  { name: "Chat", href: "/dashboard/messages", icon: MessageSquare },
   { name: "Informes", href: "/dashboard/reports", icon: FileBarChart },
 ];
 
@@ -93,7 +93,7 @@ const Sidebar = () => {
                     >
                       <Icon className="h-5 w-5" />
                       <span className="font-medium">{item.name}</span>
-                      {item.name === "Comunicaciones" && unreadCount > 0 && (
+                      {item.name === "Chat" && unreadCount > 0 && (
                         <Badge className="ml-auto bg-red-500 text-white text-xs px-2 min-w-5 h-5 flex items-center justify-center rounded-full">
                           {unreadCount}
                         </Badge>

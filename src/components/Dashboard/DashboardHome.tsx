@@ -57,43 +57,6 @@ const DashboardHome = () => {
 
   return (
     <div className="space-y-10">
-      <section className="rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent px-6 py-8 sm:px-8">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-3">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/60 px-3 py-1 text-sm font-medium text-primary">
-              <Sparkles className="h-4 w-4" />
-              Panel principal
-            </span>
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Hola, {fullName}</h1>
-              <p className="mt-2 max-w-2xl text-base text-muted-foreground sm:text-lg">
-                Gestiona tus comunicaciones, informes y objetivos de inversión desde un mismo lugar.
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-col items-start gap-3 rounded-2xl border border-border/60 bg-background/70 p-5 text-sm shadow-sm backdrop-blur sm:min-w-[220px]">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <User className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Tipo de inversor</p>
-                <Badge className={`${getTipoInversorColor(investorType)} mt-1`}>{investorType}</Badge>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Building2 className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Bróker asignado</p>
-                <p className="text-sm font-medium text-foreground">{brokerName}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         <Card
           role="button"
