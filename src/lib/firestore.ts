@@ -54,7 +54,6 @@ export interface Message {
   remitente: "cliente" | "asesora";
   estado: "pendiente" | "respondido" | "en_revision" | "enviado";
   leido: boolean;
-  visto: boolean;
   archivo?: Archivo;
 }
 
@@ -317,7 +316,6 @@ const mapMessageSnapshot = (
     remitente,
     estado,
     leido: Boolean(data.read),
-    visto: Boolean(data.seen ?? data.visto),
     ...(archivo ? { archivo } : {}),
   };
 };

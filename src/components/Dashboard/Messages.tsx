@@ -103,7 +103,7 @@ const Messages = () => {
 
   const getStatusIcon = (msg: Message) => {
     if (msg.remitente === "cliente") {
-      if (msg.visto) {
+      if (msg.leido) {
         return <CheckCheck className="h-3 w-3 text-green-600" />;
       }
 
