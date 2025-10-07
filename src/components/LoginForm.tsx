@@ -12,6 +12,8 @@ const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "" });
   const { login } = useAuth();
 
@@ -136,20 +138,53 @@ const LoginForm = () => {
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (errors.password) {
-                      setErrors((prev) => ({ ...prev, password: "" }));
-                    }
-                  }}
-                  required
-                  className="h-11"
-                />
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Contraseña</Label>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    aria-pressed={showPassword}
+                    className="text-xs font-medium text-primary hover:underline focus:outline-none"
+                  >
+                    {showPassword ? "Ocultar" : "Mostrar"}
+                  </button>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="h-11 pr-20"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm">
+                <label htmlFor="remember-me" className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="remember-me"
+                    checked={rememberMe}
+                    onChange={(event) => setRememberMe(event.target.checked)}
+                    className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                  />
+                  <span>Recordarme</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    toast({
+                      title: "Recuperar contraseña",
+                      description:
+                        "Contacta a tu administrador o utiliza la opción de restablecimiento en la app principal.",
+                    })
+                  }
+                  className="text-primary hover:underline text-left"
+                >
+                  Olvidé mi contraseña
+                </button>
                 {errors.password && (
                   <p className="text-sm text-destructive">{errors.password}</p>
                 )}
@@ -170,24 +205,6 @@ const LoginForm = () => {
                 )}
               </Button>
             </form>
-
-            <div className="mt-6 text-center">
-              <div className="text-sm text-muted-foreground mb-3">
-                Credenciales de demostración:
-              </div>
-              <Button
-                variant="outline"
-                onClick={fillDemoCredentials}
-                className="w-full text-sm"
-              >
-                Usar credenciales demo
-              </Button>
-              <div className="mt-2 text-xs text-muted-foreground">
-                Email: maria.gonzalez@email.com
-                <br />
-                Contraseña: password123
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>
