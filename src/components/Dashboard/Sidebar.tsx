@@ -4,7 +4,7 @@ import { Home, MessageSquare, LogOut, FileBarChart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { subscribeToUnreadMessagesCount } from "@/lib/firestore";
+import { useUnreadMessages } from "@/contexts/UnreadMessagesContext";
 
 const navigation = [
   { name: "Inicio", href: "/dashboard", icon: Home },
@@ -15,28 +15,8 @@ const navigation = [
 const Sidebar = () => {
   const location = useLocation();
   const { logout, user } = useAuth();
-  const userId = user?.id;
-
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { unreadCount } = useUnreadMessages();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  useEffect(() => {
-    if (!userId) {
-      setUnreadCount(0);
-      return;
-    }
-
-    const unsubscribe = subscribeToUnreadMessagesCount(
-      userId,
-      (count) => setUnreadCount(count),
-      (error) => {
-        console.error("Error al obtener mensajes no leídos", error);
-        setUnreadCount(0);
-      },
-    );
-
-    return () => unsubscribe();
-  }, [userId]);
 
   useEffect(() => {
     const toggleMenu = () => setIsMenuOpen((prev) => !prev);
