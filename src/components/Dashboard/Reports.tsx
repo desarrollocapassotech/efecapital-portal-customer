@@ -88,7 +88,7 @@ const Reports: React.FC = () => {
     nameFilter.trim().length > 0 || startDate !== "" || endDate !== "";
 
   return (
-    <div className="mt-8 space-y-6">
+    <div className="mt-2 space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <div className="rounded-full bg-primary/10 p-3 text-primary">

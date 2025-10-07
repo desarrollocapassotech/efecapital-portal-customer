@@ -184,13 +184,13 @@ const Messages = () => {
   );
 
   return (
-    <div className="mt-8 h-full flex flex-col overflow-hidden">
+    <div className="mt-2 h-full flex flex-col overflow-hidden">
       <div className="flex items-center gap-4 mb-4">
         <div className="bg-primary/10 rounded-full p-3">
           <MessageSquare className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold">Chat con tu asesora</h1>
+          <h1 className="font-bold">Chat con tu asesora</h1>
         </div>
       </div>
 

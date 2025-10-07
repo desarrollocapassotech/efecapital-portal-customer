@@ -24,7 +24,7 @@ const DashboardLayout = () => {
           {/* Main */}
           <main className="flex-1 overflow-y-auto ml-0 md:ml-64">
             {/* Contenedor que ocupa todo el alto disponible */}
-            <div className="flex flex-col h-full min-h-0 w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div className="flex flex-col h-full min-h-0 w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 sm:py-8">
               <Outlet />
             </div>
           </main>
