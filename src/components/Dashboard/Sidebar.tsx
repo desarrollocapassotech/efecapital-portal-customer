@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, MessageSquare, LogOut, FileBarChart } from "lucide-react";
+import { Home, MessageSquare, LogOut, FileBarChart, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -100,10 +100,11 @@ const Sidebar = () => {
                   ref={closeButtonRef}
                   type="button"
                   variant="ghost"
-                  className="h-8 px-3 py-1 text-sm font-medium sm:hidden"
+                  className="h-8 w-8 p-0 sm:hidden"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Cerrar menú
+                  <X className="h-4 w-4" aria-hidden="true" />
+                  <span className="sr-only">Cerrar menú</span>
                 </Button>
               </div>
             </div>
