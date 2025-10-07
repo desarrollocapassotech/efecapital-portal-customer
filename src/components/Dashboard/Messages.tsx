@@ -19,6 +19,7 @@ import {
   ImageIcon,
   FileDown,
   Loader2,
+  CheckCheck,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -100,8 +101,16 @@ const Messages = () => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
+  const getStatusIcon = (msg: Message) => {
+    if (msg.remitente === "cliente") {
+      if (msg.visto) {
+        return <CheckCheck className="h-3 w-3 text-green-600" />;
+      }
+
+      return <Clock className="h-3 w-3 text-yellow-600" />;
+    }
+
+    switch (msg.estado) {
       case "pendiente":
       case "enviado":
         return <Clock className="h-3 w-3 text-yellow-600" />;
@@ -218,7 +227,7 @@ const Messages = () => {
                     {renderMessageContent(msg)}
                     {msg.remitente === "cliente" && (
                       <div className="flex justify-end mt-1">
-                        {getStatusIcon(msg.estado)}
+                        {getStatusIcon(msg)}
                       </div>
                     )}
                   </div>
