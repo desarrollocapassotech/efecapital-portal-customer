@@ -8,6 +8,7 @@ import LoginForm from "@/components/LoginForm";
 import DashboardLayout from "@/components/Dashboard/DashboardLayout";
 import DashboardHome from "@/components/Dashboard/DashboardHome";
 import Messages from "@/components/Dashboard/Messages";
+import Reports from "@/components/Dashboard/Reports";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -66,6 +67,7 @@ const App = () => (
             >
               <Route index element={<DashboardHome />} />
               <Route path="messages" element={<Messages />} />
+              <Route path="reports" element={<Reports />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

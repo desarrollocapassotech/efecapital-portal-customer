@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, MessageSquare, LogOut } from "lucide-react";
+import { Home, MessageSquare, LogOut, FileBarChart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { subscribeToUnreadMessagesCount } from "@/lib/firestore";
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Comunicaciones", href: "/dashboard/messages", icon: MessageSquare },
+  { name: "Informes", href: "/dashboard/reports", icon: FileBarChart },
 ];
 
 const Sidebar = () => {
