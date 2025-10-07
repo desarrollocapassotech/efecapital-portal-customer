@@ -1,16 +1,22 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import LoginForm from "@/components/LoginForm";
-import DashboardLayout from "@/components/Dashboard/DashboardLayout";
-import DashboardHome from "@/components/Dashboard/DashboardHome";
-import Messages from "@/components/Dashboard/Messages";
-import Reports from "@/components/Dashboard/Reports";
-import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
+
+const LoginForm = lazy(() => import("@/components/LoginForm"));
+const DashboardLayout = lazy(() =>
+  import("@/components/Dashboard/DashboardLayout"),
+);
+const DashboardHome = lazy(() =>
+  import("@/components/Dashboard/DashboardHome"),
+);
+const Messages = lazy(() => import("@/components/Dashboard/Messages"));
+const Reports = lazy(() => import("@/components/Dashboard/Reports"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -47,30 +53,32 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route
-              path="/login"
-              element={
-                <PublicRoute>
-                  <LoginForm />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<DashboardHome />} />
-              <Route path="messages" element={<Messages />} />
-              <Route path="reports" element={<Reports />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<AuthGuardLoader />}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route
+                path="/login"
+                element={
+                  <PublicRoute>
+                    <LoginForm />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<DashboardHome />} />
+                <Route path="messages" element={<Messages />} />
+                <Route path="reports" element={<Reports />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>
