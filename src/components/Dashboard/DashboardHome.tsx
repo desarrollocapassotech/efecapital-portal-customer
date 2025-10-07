@@ -15,6 +15,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUnreadMessages } from "@/contexts/UnreadMessagesContext";
 import {
   MessageCircle,
   FileBarChart,
@@ -40,6 +41,7 @@ const getTipoInversorColor = (tipo: string) => {
 const DashboardHome = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { unreadCount } = useUnreadMessages();
 
   const fullName = [user?.nombre, user?.apellido].filter(Boolean).join(" ") || "Inversionista";
   const investorType = user?.tipoInversor || "Sin definir";
@@ -67,6 +69,11 @@ const DashboardHome = () => {
         >
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-primary/10 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
           <CardHeader className="relative flex flex-row items-start justify-between">
+            {unreadCount > 0 && (
+              <Badge className="absolute right-4 top-4 min-w-[1.5rem] h-6 px-2 text-xs bg-red-500 text-white flex items-center justify-center">
+                {unreadCount}
+              </Badge>
+            )}
             <div className="space-y-2">
               <CardTitle className="text-xl font-semibold">Hablar con mi asesora</CardTitle>
               <CardDescription>Abre el chat para mantenerte en contacto con tu asesora financiera.</CardDescription>
