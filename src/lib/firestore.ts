@@ -141,6 +141,7 @@ const clientsCol = collection(db, "clients");
 const brokersCol = collection(db, "brokers");
 const messagesCol = collection(db, "messages");
 const reportsCol = collection(db, "reports");
+const documentsCol = collection(db, "documents");
 
 // -----------------------------
 // Brokers
@@ -361,6 +362,103 @@ const parseArchivoFlexible = (value: unknown, fallbackName = "Informe"): Archivo
   return archivo;
 };
 
+const toOptionalIdString = (value: unknown): string | undefined => {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : undefined;
+  }
+
+  if (typeof value === "number") {
+    return String(value);
+  }
+
+  return undefined;
+};
+
+const matchesTargetClient = (value: unknown, target: string): boolean => {
+  if (value == null) return false;
+
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value) === target;
+  }
+
+  if (Array.isArray(value)) {
+    return value.some((item) => matchesTargetClient(item, target));
+  }
+
+  if (typeof value === "object") {
+    const raw = value as Record<string, unknown>;
+
+    const typeCandidate = toOptionalIdString(raw.type)?.toLowerCase();
+    if (typeCandidate === "client" || typeCandidate === "cliente") {
+      const candidate =
+        toOptionalIdString(raw.id) ??
+        toOptionalIdString(raw.clientId) ??
+        toOptionalIdString(raw.clienteId) ??
+        toOptionalIdString(raw.value);
+      if (candidate && candidate === target) {
+        return true;
+      }
+    }
+
+    const keysToCheck = [
+      "id",
+      "clientId",
+      "clienteId",
+      "value",
+      "uid",
+      "userId",
+      "cliente",
+      "client",
+    ];
+
+    return keysToCheck.some((key) => matchesTargetClient(raw[key], target));
+  }
+
+  return false;
+};
+
+const resolveClientIdFromData = (
+  data: DocumentData,
+  targetClientId?: string,
+): string | null => {
+  const directKeys = [
+    "clientId",
+    "clienteId",
+    "client_id",
+    "cliente_id",
+    "client",
+    "cliente",
+  ];
+
+  for (const key of directKeys) {
+    const candidate = toOptionalIdString(data[key]);
+    if (candidate) {
+      return candidate;
+    }
+  }
+
+  if (!targetClientId) {
+    return null;
+  }
+
+  const candidateContainers = [
+    data.clients,
+    data.clientes,
+    data.clientIds,
+    data.clienteIds,
+    data.sharedWith,
+    data.shareTo,
+    data.visibleTo,
+  ];
+
+  const matches = candidateContainers.some((value) =>
+    matchesTargetClient(value, targetClientId),
+  );
+
+  return matches ? targetClientId : null;
+};
+
 const buildArchivoFromFields = (
   fallbackName: string,
   url?: string,
@@ -399,9 +497,10 @@ const buildArchivoFromFields = (
 
 const mapReportSnapshot = (
   snapshot: QueryDocumentSnapshot<DocumentData>,
+  targetClientId?: string,
 ): Report | null => {
   const data = snapshot.data();
-  const clientId = parseString(data.clientId ?? data.clienteId);
+  const clientId = resolveClientIdFromData(data, targetClientId);
   if (!clientId) return null;
 
   const nombreRaw =
@@ -469,19 +568,56 @@ export const subscribeToClientReports = (
     return () => undefined;
   }
 
-  const qy = query(reportsCol, where("clientId", "==", clienteId));
+  const aggregated: { legacy: Report[]; documents: Report[] } = {
+    legacy: [],
+    documents: [],
+  };
 
-  return onSnapshot(
-    qy,
+  const emitReports = () => {
+    const uniqueReports = new Map<string, Report>();
+    [...aggregated.documents, ...aggregated.legacy].forEach((report) => {
+      uniqueReports.set(report.id, report);
+    });
+
+    const ordered = Array.from(uniqueReports.values()).sort(
+      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
+    );
+
+    onData(ordered);
+  };
+
+  const handleSnapshotError = (error: FirestoreError) => {
+    if (onError) {
+      onError(error);
+    }
+  };
+
+  const legacyUnsubscribe = onSnapshot(
+    query(reportsCol, where("clientId", "==", clienteId)),
     (snapshot) => {
-      const reports = snapshot.docs
-        .map(mapReportSnapshot)
-        .filter((report): report is Report => report !== null)
-        .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
-      onData(reports);
+      aggregated.legacy = snapshot.docs
+        .map((doc) => mapReportSnapshot(doc, clienteId))
+        .filter((report): report is Report => report !== null);
+      emitReports();
     },
-    onError,
+    handleSnapshotError,
   );
+
+  const documentsUnsubscribe = onSnapshot(
+    query(documentsCol),
+    (snapshot) => {
+      aggregated.documents = snapshot.docs
+        .map((doc) => mapReportSnapshot(doc, clienteId))
+        .filter((report): report is Report => report !== null);
+      emitReports();
+    },
+    handleSnapshotError,
+  );
+
+  return () => {
+    legacyUnsubscribe();
+    documentsUnsubscribe();
+  };
 };
 
 // Convierte documento del esquema canónico -> tipo Message (español)
