@@ -57,6 +57,15 @@ export interface Message {
   archivo?: Archivo;
 }
 
+export interface Report {
+  id: string;
+  clienteId: string;
+  nombre: string;
+  fecha: string; // ISO
+  archivo: Archivo;
+  descripcion?: string;
+}
+
 export interface ClienteProfile {
   id: string;
   nombre: string;
@@ -131,6 +140,7 @@ const guessNameParts = (user: FirebaseAuthUser) => {
 const clientsCol = collection(db, "clients");
 const brokersCol = collection(db, "brokers");
 const messagesCol = collection(db, "messages");
+const reportsCol = collection(db, "reports");
 
 // -----------------------------
 // Brokers
@@ -286,6 +296,192 @@ const parseArchivo = (value: unknown): Archivo | null => {
   const fechaSubida = parseOptionalString(raw.fechaSubida); if (fechaSubida) archivo.fechaSubida = fechaSubida;
 
   return archivo;
+};
+
+const parseArchivoFlexible = (value: unknown, fallbackName = "Informe"): Archivo | null => {
+  const parsed = parseArchivo(value);
+  if (parsed && parsed.url) {
+    if (!parsed.nombre) parsed.nombre = fallbackName;
+    return parsed;
+  }
+
+  if (typeof value === "string") {
+    const url = parseString(value);
+    if (!url) return null;
+    return { nombre: fallbackName, url };
+  }
+
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const raw = value as Record<string, unknown>;
+  const urlCandidate =
+    parseOptionalString(raw.url) ??
+    parseOptionalString(raw.link) ??
+    parseOptionalString(raw.fileUrl) ??
+    parseOptionalString(raw.downloadUrl) ??
+    parseOptionalString(raw.urlDescarga);
+
+  if (!urlCandidate) {
+    return null;
+  }
+
+  const archivo: Archivo = {
+    nombre:
+      parseOptionalString(raw.nombre) ??
+      parseOptionalString(raw.name) ??
+      parseOptionalString(raw.title) ??
+      parseOptionalString(raw.fileName) ??
+      fallbackName,
+    url: urlCandidate,
+  };
+
+  const tipo = parseOptionalString(raw.tipo) ?? parseOptionalString(raw.type);
+  if (tipo) archivo.tipo = tipo;
+
+  const comentario =
+    parseOptionalString(raw.comentario) ??
+    parseOptionalString(raw.descripcion) ??
+    parseOptionalString(raw.description);
+  if (comentario) archivo.comentario = comentario;
+
+  const tamaño =
+    parseOptionalString(raw.tamaño) ??
+    parseOptionalString(raw.size) ??
+    parseOptionalString(raw.fileSize);
+  if (tamaño) archivo.tamaño = tamaño;
+
+  const fechaSubida =
+    parseOptionalString(raw.fechaSubida) ??
+    parseOptionalString(raw.uploadedAt) ??
+    parseOptionalString(raw.updatedAt);
+  if (fechaSubida) archivo.fechaSubida = fechaSubida;
+
+  return archivo;
+};
+
+const buildArchivoFromFields = (
+  fallbackName: string,
+  url?: string,
+  extra?: Record<string, unknown>,
+): Archivo | null => {
+  const link = parseOptionalString(url);
+  if (!link) return null;
+
+  const archivo: Archivo = {
+    nombre: fallbackName || "Informe",
+    url: link,
+  };
+
+  if (extra) {
+    const tipo = parseOptionalString(extra.tipo) ?? parseOptionalString(extra.type);
+    if (tipo) archivo.tipo = tipo;
+    const comentario =
+      parseOptionalString(extra.comentario) ??
+      parseOptionalString(extra.descripcion) ??
+      parseOptionalString(extra.description);
+    if (comentario) archivo.comentario = comentario;
+    const tamaño =
+      parseOptionalString(extra.tamaño) ??
+      parseOptionalString(extra.size) ??
+      parseOptionalString(extra.fileSize);
+    if (tamaño) archivo.tamaño = tamaño;
+    const fechaSubida =
+      parseOptionalString(extra.fechaSubida) ??
+      parseOptionalString(extra.uploadedAt) ??
+      parseOptionalString(extra.updatedAt);
+    if (fechaSubida) archivo.fechaSubida = fechaSubida;
+  }
+
+  return archivo;
+};
+
+const mapReportSnapshot = (
+  snapshot: QueryDocumentSnapshot<DocumentData>,
+): Report | null => {
+  const data = snapshot.data();
+  const clientId = parseString(data.clientId ?? data.clienteId);
+  if (!clientId) return null;
+
+  const nombreRaw =
+    parseString(data.nombre ?? data.name ?? data.title ?? data.reportName ?? "") ||
+    parseString((data.archivo as Record<string, unknown> | undefined)?.nombre ?? "");
+  const nombre = nombreRaw || "Informe";
+
+  const archivo =
+    parseArchivoFlexible(data.archivo, nombre) ??
+    parseArchivoFlexible(data.file, nombre) ??
+    parseArchivoFlexible(data.documento, nombre) ??
+    buildArchivoFromFields(
+      nombre,
+      parseOptionalString(data.url) ??
+        parseOptionalString(data.fileUrl) ??
+        parseOptionalString(data.downloadUrl) ??
+        parseOptionalString(data.link) ??
+        undefined,
+      typeof data.file === "object" && data.file
+        ? (data.file as Record<string, unknown>)
+        : undefined,
+    );
+
+  if (!archivo || !archivo.url) {
+    return null;
+  }
+
+  const fechaRaw =
+    data.fecha ??
+    data.date ??
+    data.reportDate ??
+    data.periodo ??
+    data.period ??
+    data.uploadedAt ??
+    data.createdAt ??
+    data.updatedAt ??
+    data.timestamp ??
+    (snapshot as unknown as { createTime?: Timestamp }).createTime ??
+    (snapshot as unknown as { updateTime?: Timestamp }).updateTime;
+
+  const fecha = toISO(fechaRaw);
+
+  const descripcion =
+    parseOptionalString(data.descripcion) ??
+    parseOptionalString(data.description) ??
+    parseOptionalString((data.archivo as Record<string, unknown> | undefined)?.descripcion);
+
+  return {
+    id: snapshot.id,
+    clienteId: clientId,
+    nombre,
+    fecha,
+    archivo,
+    ...(descripcion ? { descripcion } : {}),
+  };
+};
+
+export const subscribeToClientReports = (
+  clienteId: string,
+  onData: (reports: Report[]) => void,
+  onError?: (error: FirestoreError) => void,
+): Unsubscribe => {
+  if (!clienteId) {
+    onData([]);
+    return () => undefined;
+  }
+
+  const qy = query(reportsCol, where("clientId", "==", clienteId));
+
+  return onSnapshot(
+    qy,
+    (snapshot) => {
+      const reports = snapshot.docs
+        .map(mapReportSnapshot)
+        .filter((report): report is Report => report !== null)
+        .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+      onData(reports);
+    },
+    onError,
+  );
 };
 
 // Convierte documento del esquema canónico -> tipo Message (español)
