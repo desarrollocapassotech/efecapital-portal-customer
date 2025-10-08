@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-import { TrendingUp } from "lucide-react";
+import { LogIn, TrendingUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { FirebaseError } from "firebase/app";
 import { Spinner } from "@/components/ui/loading-state";
@@ -95,13 +95,10 @@ const LoginForm = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-              <TrendingUp className="h-8 w-8 text-foreground" />
+            <div className="backdrop-blur-sm p-4">
+              <img src="logo11.png" alt="Logo" className='w-24' />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            EFECapital
-          </h1>
           <p className="text-foreground/80">
             Tu plataforma de asesoría financiera
           </p>
@@ -204,6 +201,8 @@ const LoginForm = () => {
                 ) : (
                   "Iniciar sesión"
                 )}
+
+                <LogIn></LogIn>
               </Button>
             </form>
           </CardContent>

@@ -47,11 +47,10 @@ const Navbar = () => {
           className="absolute inset-0 flex items-center justify-center cursor-pointer"
         >
           <div className="flex items-center gap-3">
-            <div className="bg-primary rounded-lg p-1.5">
-              <TrendingUp className="h-5 w-5 text-primary-foreground" />
+            <div className="p-1.5">
+              <img src="logo11.png" alt="Logo" className='w-14' />
             </div>
             <div className="text-center">
-              <h1 className="font-bold text-lg">EFECapital</h1>
               <p className="text-xs text-muted-foreground">Panel Cliente</p>
             </div>
           </div>
