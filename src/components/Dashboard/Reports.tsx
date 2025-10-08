@@ -147,21 +147,22 @@ const Reports: React.FC = () => {
   );
 
   return (
-    <div className="mt-2 space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <div className="rounded-full bg-primary/10 p-3 text-primary">
-            <FileBarChart className="h-6 w-6" />
+    <div className="mt-2 space-y-8 pb-10">
+      <div className="flex flex-col gap-4 rounded-3xl border border-white/60 bg-white/70 p-6 shadow-[0_22px_65px_-38px_rgba(15,23,42,0.45)] sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-4">
+          <div className="rounded-full bg-financial-mint/50 p-3 text-primary">
+            <FileBarChart className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Mis informes</h1>
-            <p className="text-muted-foreground">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground">Reportes y documentos</p>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Mis informes</h1>
+            <p className="text-sm text-muted-foreground">
               Consulta y descarga los reportes que tu asesora comparte contigo.
             </p>
           </div>
         </div>
         <Button
-          className="w-full sm:w-auto"
+          className="w-full rounded-full bg-primary px-6 py-2 text-primary-foreground shadow-[0_18px_45px_-30px_rgba(37,99,235,0.8)] transition hover:bg-primary/90 sm:w-auto"
           onClick={() => handleDownloadReport(latestReport)}
           disabled={!latestReport}
         >
@@ -169,15 +170,18 @@ const Reports: React.FC = () => {
         </Button>
       </div>
 
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
-          <CardTitle>Historial de informes</CardTitle>
+          <CardTitle className="text-xl font-semibold">Historial de informes</CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">
+            Filtra y accede a los documentos relevantes cuando lo necesites.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex justify-end md:hidden">
             <Dialog open={isFiltersDialogOpen} onOpenChange={setIsFiltersDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="icon" aria-label="Abrir filtros">
+                <Button variant="outline" size="icon" aria-label="Abrir filtros" className="rounded-full border border-white/60 bg-white/80">
                   <Filter className="h-5 w-5" />
                   <span className="sr-only">Abrir filtros</span>
                 </Button>
@@ -219,7 +223,7 @@ const Reports: React.FC = () => {
           </div>
 
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="border border-destructive/30 bg-white/80">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Error al cargar</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
@@ -227,10 +231,7 @@ const Reports: React.FC = () => {
           )}
 
           {isLoading ? (
-            <LoadingState
-              label="Cargando informes..."
-              className="justify-center py-10"
-            />
+            <LoadingState label="Cargando informes..." className="justify-center py-10" />
           ) : filteredReports.length ? (
             <Table>
               <TableHeader>
@@ -252,6 +253,7 @@ const Reports: React.FC = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => handleDownloadReport(report)}
+                        className="rounded-full border border-white/60 bg-white/80"
                       >
                         <Download className="mr-2 h-4 w-4" /> Descargar
                       </Button>
@@ -261,16 +263,10 @@ const Reports: React.FC = () => {
               </TableBody>
             </Table>
           ) : (
-            <div className="rounded-lg border border-dashed border-border py-10 text-center">
-              <p className="text-sm text-muted-foreground">
-                No encontramos informes.
-              </p>
+            <div className="rounded-3xl border border-dashed border-white/60 bg-white/60 py-10 text-center">
+              <p className="text-sm text-muted-foreground">No encontramos informes.</p>
               <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Button
-                  variant="outline"
-                  onClick={handleClearFilters}
-                  disabled={!canClearFilters}
-                >
+                <Button variant="outline" onClick={handleClearFilters} disabled={!canClearFilters}>
                   Limpiar filtros
                 </Button>
               </div>

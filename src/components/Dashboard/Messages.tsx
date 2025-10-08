@@ -129,19 +129,20 @@ const Messages = () => {
   );
 
   return (
-    <div className="mt-2 h-full flex flex-col overflow-hidden">
-      <div className="flex items-center gap-4 mb-4">
-        <div className="bg-primary/10 rounded-full p-3">
-          <MessageSquare className="h-6 w-6 text-primary" />
+    <div className="mt-2 flex h-full flex-col gap-6 pb-6">
+      <div className="flex items-center gap-4 rounded-3xl border border-white/60 bg-white/70 p-4 shadow-[0_20px_60px_-38px_rgba(15,23,42,0.45)]">
+        <div className="rounded-full bg-financial-mint/50 p-3 text-primary">
+          <MessageSquare className="h-5 w-5" />
         </div>
         <div>
-          <h1 className="font-bold">Chat con tu asesora</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Conversa cuando quieras</p>
+          <h1 className="text-xl font-semibold text-foreground">Chat con tu asesora</h1>
         </div>
       </div>
 
-      <Card className="flex-1 flex flex-col overflow-hidden h-full">
-        <CardContent className="flex-1 flex flex-col p-0 h-full">
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <Card className="glass-card flex h-full flex-1 flex-col overflow-hidden">
+        <CardContent className="flex h-full flex-1 flex-col p-0">
+          <div className="flex-1 space-y-3 overflow-y-auto p-4">
             {isLoading ? (
               <LoadingState
                 label="Cargando mensajes..."
@@ -154,13 +155,13 @@ const Messages = () => {
                   className={`max-w-[80%] ${msg.isFromAdvisor ? "mr-auto" : "ml-auto"}`}
                 >
                   <div
-                    className={`p-3 rounded-lg ${
+                    className={`rounded-2xl border px-4 py-3 shadow-[0_12px_32px_-28px_rgba(15,23,42,0.3)] ${
                       msg.isFromAdvisor
-                        ? "bg-muted border-l-4 border-border"
-                        : "bg-primary/10 border-l-4 border-primary"
+                        ? "border-white/60 bg-white/80"
+                        : "border-primary/20 bg-primary/10"
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="mb-2 flex items-center justify-between">
                       <span className="text-sm font-medium">
                         {msg.isFromAdvisor ? "Florencia Foos" : "Tú"}
                       </span>
@@ -170,7 +171,7 @@ const Messages = () => {
                     </div>
                     {renderMessageContent(msg)}
                     {!msg.isFromAdvisor && (
-                      <div className="flex justify-end mt-1">
+                      <div className="mt-1 flex justify-end text-xs text-muted-foreground">
                         {getStatusIcon(msg)}
                       </div>
                     )}
@@ -185,8 +186,8 @@ const Messages = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="border-t p-4 space-y-3 bg-background">
-            <div className="flex items-end gap-2">
+          <div className="space-y-3 border-t border-white/50 bg-white/70 p-4">
+            <div className="flex items-end gap-3">
               <Textarea
                 placeholder="Escribir nuevo mensaje..."
                 value={newMessage}
@@ -204,9 +205,10 @@ const Messages = () => {
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim() || isSending || !userId}
                 size="icon"
+                className="h-10 w-10 rounded-full bg-primary text-primary-foreground shadow-[0_15px_40px_-30px_rgba(37,99,235,0.9)] hover:bg-primary/90"
               >
                 {isSending ? (
-                  <Spinner size="sm" className="text-primary" />
+                  <Spinner size="sm" className="text-primary-foreground" />
                 ) : (
                   <Send className="h-4 w-4" />
                 )}

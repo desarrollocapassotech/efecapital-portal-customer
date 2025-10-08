@@ -8,52 +8,59 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-  --background: 248 250% 99%;
-  --foreground: 221 43% 10%;
+    --background: 220 46% 97%;
+    --foreground: 221 43% 14%;
 
-  --card: 0 0% 100%;
-  --card-foreground: 221 43% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 221 43% 14%;
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 221 39% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 221 43% 12%;
 
-  --primary: 221 83% 53%;
-  --primary-foreground: 0 0% 98%;
-  --primary-hover: 221 83% 48%;
+    --primary: 221 83% 54%;
+    --primary-foreground: 0 0% 98%;
+    --primary-hover: 221 83% 48%;
 
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 221 39% 8%;
+    --secondary: 218 34% 94%;
+    --secondary-foreground: 221 39% 20%;
 
-  --muted: 220 14% 96%;
-  --muted-foreground: 221 16% 32%;
+    --muted: 220 20% 94%;
+    --muted-foreground: 221 19% 35%;
 
-  --accent: 142 76% 36%;
-  --accent-foreground: 0 0% 98%;
+    --accent: 158 62% 48%;
+    --accent-foreground: 0 0% 98%;
 
-  --success: 142 76% 36%;
-  --success-foreground: 0 0% 98%;
+    --success: 157 66% 40%;
+    --success-foreground: 0 0% 98%;
 
-  --warning: 38 92% 50%;
-  --warning-foreground: 0 0% 98%;
+    --warning: 36 92% 55%;
+    --warning-foreground: 0 0% 10%;
 
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
+    --destructive: 350 84% 56%;
+    --destructive-foreground: 0 0% 98%;
 
-  --border:  220 13% 88%;
-  --input: 220 13% 91%;
-  --ring: 221 83% 53%;
+    --border: 220 18% 86%;
+    --input: 220 18% 90%;
+    --ring: 221 83% 53%;
 
-  --radius: 0.5rem;
+    --radius: 0.75rem;
 
---sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 6% 18%;
-    --sidebar-primary: 240 6% 10%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 20%;
+    --sidebar-primary: 221 83% 54%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 5% 96%;
-    --sidebar-accent-foreground: 240 6% 14%;
-    --sidebar-border: 220 13% 88%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-}
+    --sidebar-accent: 220 38% 96%;
+    --sidebar-accent-foreground: 222 47% 20%;
+    --sidebar-border: 220 18% 86%;
+    --sidebar-ring: 221 83% 53%;
+
+    --financial-blue: 221 83% 53%;
+    --financial-navy: 224 68% 26%;
+    --financial-sky: 205 92% 95%;
+    --financial-mint: 158 52% 88%;
+    --financial-sand: 35 100% 92%;
+    --financial-rose: 345 70% 90%;
+  }
 
   .dark {
     --background: 222.2 84% 4.9%; /* Fondo oscuro */
@@ -101,6 +108,22 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at 0% 0%, hsl(var(--financial-sky) / 0.9), transparent 55%),
+      radial-gradient(circle at 100% 10%, hsl(var(--financial-mint) / 0.7), transparent 55%),
+      radial-gradient(circle at 50% 100%, hsl(var(--financial-rose) / 0.4), transparent 60%),
+      linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 40%, #fff 100%);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply rounded-3xl border border-white/60 bg-white/70 shadow-[0_28px_80px_-36px_rgba(30,64,175,0.45)] backdrop-blur-xl;
+  }
+
+  .soft-card {
+    @apply rounded-3xl border border-white/40 bg-white/60 shadow-[0_16px_45px_-30px_rgba(15,23,42,0.35)] backdrop-blur-xl;
   }
 }

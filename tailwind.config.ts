@@ -19,17 +19,25 @@ export default {
 			}
 		},
 		extend: {
-			colors: {
-				border: 'hsl(var(--border))',
-				input: 'hsl(var(--input))',
-				ring: 'hsl(var(--ring))',
-				background: 'hsl(var(--background))',
-				foreground: 'hsl(var(--foreground))',
-				primary: {
-					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))',
-					hover: 'hsl(var(--primary-hover))'
-				},
+                        colors: {
+                                border: 'hsl(var(--border))',
+                                input: 'hsl(var(--input))',
+                                ring: 'hsl(var(--ring))',
+                                background: 'hsl(var(--background))',
+                                foreground: 'hsl(var(--foreground))',
+                                financial: {
+                                        blue: 'hsl(var(--financial-blue))',
+                                        navy: 'hsl(var(--financial-navy))',
+                                        sky: 'hsl(var(--financial-sky))',
+                                        mint: 'hsl(var(--financial-mint))',
+                                        sand: 'hsl(var(--financial-sand))',
+                                        rose: 'hsl(var(--financial-rose))'
+                                },
+                                primary: {
+                                        DEFAULT: 'hsl(var(--primary))',
+                                        foreground: 'hsl(var(--primary-foreground))',
+                                        hover: 'hsl(var(--primary-hover))'
+                                },
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))'
