@@ -124,15 +124,6 @@ const Reports: React.FC = () => {
   const FiltersFields = ({ className }: { className?: string }) => (
     <div className={cn("grid gap-4", className)}>
       <div className="space-y-2">
-        <Label htmlFor="name-filter">Filtrar por nombre</Label>
-        <Input
-          id="name-filter"
-          placeholder="Ej. Informe mensual"
-          value={nameFilterInput}
-          onChange={(event) => setNameFilterInput(event.target.value)}
-        />
-      </div>
-      <div className="space-y-2">
         <Label htmlFor="start-date">Desde</Label>
         <Input
           id="start-date"
@@ -181,10 +172,6 @@ const Reports: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle>Historial de informes</CardTitle>
-          <CardDescription>
-            Filtra por nombre o por fecha para encontrar rápidamente el documento que
-            necesitas.
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex justify-end md:hidden">
@@ -212,16 +199,6 @@ const Reports: React.FC = () => {
                   >
                     Limpiar filtros
                   </Button>
-                  <Button
-                    className="w-full sm:w-auto"
-                    onClick={() => {
-                      handleApplyFilters();
-                      setIsFiltersDialogOpen(false);
-                    }}
-                    disabled={!hasPendingFilterChanges}
-                  >
-                    Aplicar filtros
-                  </Button>
                   <DialogClose asChild>
                     <Button type="button" className="w-full sm:w-auto">
                       Cerrar
@@ -237,9 +214,6 @@ const Reports: React.FC = () => {
             <div className="ml-auto flex gap-2">
               <Button variant="outline" onClick={handleClearFilters} disabled={!canClearFilters}>
                 Limpiar filtros
-              </Button>
-              <Button onClick={handleApplyFilters} disabled={!hasPendingFilterChanges}>
-                Aplicar filtros
               </Button>
             </div>
           </div>
@@ -288,13 +262,9 @@ const Reports: React.FC = () => {
           ) : (
             <div className="rounded-lg border border-dashed border-border py-10 text-center">
               <p className="text-sm text-muted-foreground">
-                No encontramos informes con los filtros seleccionados. Puedes solicitar
-                un nuevo informe o ajustar tus filtros para ver otros resultados.
+                No encontramos informes.
               </p>
               <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Button asChild>
-                  <Link to="/dashboard/messages">Solicitar nuevo informe</Link>
-                </Button>
                 <Button
                   variant="outline"
                   onClick={handleClearFilters}
