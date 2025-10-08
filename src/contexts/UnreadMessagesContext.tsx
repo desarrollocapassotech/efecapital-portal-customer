@@ -31,8 +31,7 @@ export const UnreadMessagesProvider = ({
       userId,
       (messages: Message[]) => {
         const count = messages.filter(
-          (message) =>
-            message.remitente === "asesora" && (!message.visto || message.estado === "pendiente"),
+          (message) => message.isFromAdvisor && !message.read,
         ).length;
 
         setUnreadCount(count);
