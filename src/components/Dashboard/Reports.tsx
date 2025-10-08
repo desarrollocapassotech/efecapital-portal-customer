@@ -32,6 +32,9 @@ const Reports: React.FC = () => {
   const [nameFilter, setNameFilter] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [nameFilterInput, setNameFilterInput] = useState("");
+  const [startDateInput, setStartDateInput] = useState("");
+  const [endDateInput, setEndDateInput] = useState("");
   const [isFiltersDialogOpen, setIsFiltersDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -88,24 +91,45 @@ const Reports: React.FC = () => {
     window.open(report.archivo.url, "_blank", "noopener,noreferrer");
   };
 
+  const handleApplyFilters = () => {
+    setNameFilter(nameFilterInput);
+    setStartDate(startDateInput);
+    setEndDate(endDateInput);
+  };
+
   const handleClearFilters = () => {
     setNameFilter("");
     setStartDate("");
     setEndDate("");
+    setNameFilterInput("");
+    setStartDateInput("");
+    setEndDateInput("");
   };
 
   const hasActiveFilters =
     nameFilter.trim().length > 0 || startDate !== "" || endDate !== "";
 
-  const FiltersForm = ({ className }: { className?: string }) => (
+  const hasPendingFilterChanges =
+    nameFilterInput !== nameFilter ||
+    startDateInput !== startDate ||
+    endDateInput !== endDate;
+
+  const hasInputFilters =
+    nameFilterInput.trim().length > 0 ||
+    startDateInput !== "" ||
+    endDateInput !== "";
+
+  const canClearFilters = hasActiveFilters || hasInputFilters;
+
+  const FiltersFields = ({ className }: { className?: string }) => (
     <div className={cn("grid gap-4", className)}>
       <div className="space-y-2">
         <Label htmlFor="name-filter">Filtrar por nombre</Label>
         <Input
           id="name-filter"
           placeholder="Ej. Informe mensual"
-          value={nameFilter}
-          onChange={(event) => setNameFilter(event.target.value)}
+          value={nameFilterInput}
+          onChange={(event) => setNameFilterInput(event.target.value)}
         />
       </div>
       <div className="space-y-2">
@@ -113,9 +137,9 @@ const Reports: React.FC = () => {
         <Input
           id="start-date"
           type="date"
-          value={startDate}
-          max={endDate || undefined}
-          onChange={(event) => setStartDate(event.target.value)}
+          value={startDateInput}
+          max={endDateInput || undefined}
+          onChange={(event) => setStartDateInput(event.target.value)}
         />
       </div>
       <div className="space-y-2">
@@ -123,9 +147,9 @@ const Reports: React.FC = () => {
         <Input
           id="end-date"
           type="date"
-          value={endDate}
-          min={startDate || undefined}
-          onChange={(event) => setEndDate(event.target.value)}
+          value={endDateInput}
+          min={startDateInput || undefined}
+          onChange={(event) => setEndDateInput(event.target.value)}
         />
       </div>
     </div>
@@ -175,7 +199,7 @@ const Reports: React.FC = () => {
                 <DialogHeader>
                   <DialogTitle>Filtros</DialogTitle>
                 </DialogHeader>
-                <FiltersForm />
+                <FiltersFields />
                 <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                   <Button
                     variant="outline"
@@ -184,9 +208,19 @@ const Reports: React.FC = () => {
                       handleClearFilters();
                       setIsFiltersDialogOpen(false);
                     }}
-                    disabled={!hasActiveFilters}
+                    disabled={!canClearFilters}
                   >
                     Limpiar filtros
+                  </Button>
+                  <Button
+                    className="w-full sm:w-auto"
+                    onClick={() => {
+                      handleApplyFilters();
+                      setIsFiltersDialogOpen(false);
+                    }}
+                    disabled={!hasPendingFilterChanges}
+                  >
+                    Aplicar filtros
                   </Button>
                   <DialogClose asChild>
                     <Button type="button" className="w-full sm:w-auto">
@@ -198,8 +232,16 @@ const Reports: React.FC = () => {
             </Dialog>
           </div>
 
-          <div className="hidden md:block">
-            <FiltersForm className="md:grid-cols-3" />
+          <div className="hidden md:flex md:flex-wrap md:items-end md:gap-4">
+            <FiltersFields className="md:grid-cols-3 md:flex-1" />
+            <div className="ml-auto flex gap-2">
+              <Button variant="outline" onClick={handleClearFilters} disabled={!canClearFilters}>
+                Limpiar filtros
+              </Button>
+              <Button onClick={handleApplyFilters} disabled={!hasPendingFilterChanges}>
+                Aplicar filtros
+              </Button>
+            </div>
           </div>
 
           {error && (
@@ -256,7 +298,7 @@ const Reports: React.FC = () => {
                 <Button
                   variant="outline"
                   onClick={handleClearFilters}
-                  disabled={!hasActiveFilters}
+                  disabled={!canClearFilters}
                 >
                   Limpiar filtros
                 </Button>
