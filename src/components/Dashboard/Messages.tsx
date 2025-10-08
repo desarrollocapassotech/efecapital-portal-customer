@@ -20,6 +20,7 @@ import {
   FileDown,
   Loader2,
   CheckCheck,
+  Check,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -107,7 +108,7 @@ const Messages = () => {
         return <CheckCheck className="h-3 w-3 text-green-600" />;
       }
 
-      return <Clock className="h-3 w-3 text-yellow-600" />;
+      return <Check className="h-3 w-3 text-gray-400" />;
     }
 
     switch (msg.estado) {
