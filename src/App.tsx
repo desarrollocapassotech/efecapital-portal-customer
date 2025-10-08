@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
+import LoadingState from "@/components/ui/loading-state";
 
 const LoginForm = lazy(() => import("@/components/LoginForm"));
 const DashboardLayout = lazy(() =>
@@ -22,7 +22,7 @@ const queryClient = new QueryClient();
 
 const AuthGuardLoader = () => (
   <div className="flex min-h-screen items-center justify-center bg-background">
-    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+    <LoadingState label="Cargando datos..." spinnerSize="lg" />
   </div>
 );
 

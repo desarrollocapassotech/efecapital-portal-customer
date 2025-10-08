@@ -5,10 +5,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { useUnreadMessages } from '@/contexts/UnreadMessagesContext';
+import { Spinner } from '@/components/ui/loading-state';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
-  const { unreadCount } = useUnreadMessages();
+  const { unreadCount, isLoading: isUnreadLoading } = useUnreadMessages();
   const hasUnreadMessages = unreadCount > 0;
   const displayUnreadMessagesCount = unreadCount > 99 ? '99+' : `${unreadCount}`;
 
@@ -85,11 +86,16 @@ const Navbar = () => {
               aria-label="Abrir chat"
             >
               <MessageSquare className="h-5 w-5" />
-              {hasUnreadMessages && (
-                <Badge className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1.5 text-[10px] leading-none bg-red-500 text-white flex items-center justify-center">
+              {isUnreadLoading ? (
+                <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center" aria-live="polite">
+                  <Spinner size="sm" className="text-primary" />
+                  <span className="sr-only">Cargando mensajes no leídos</span>
+                </span>
+              ) : hasUnreadMessages ? (
+                <Badge className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[1.25rem] items-center justify-center px-1.5 text-[10px] leading-none bg-red-500 text-white">
                   {displayUnreadMessagesCount}
                 </Badge>
-              )}
+              ) : null}
             </Link>
           </Button>
         </div>

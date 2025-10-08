@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { AlertTriangle, Download, FileBarChart, Filter, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { AlertTriangle, Download, FileBarChart, Filter } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { subscribeToClientReports, type Report } from "@/lib/firestore";
@@ -21,6 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { LoadingState } from "@/components/ui/loading-state";
 
 const Reports: React.FC = () => {
   const { user } = useAuth();
@@ -227,9 +227,10 @@ const Reports: React.FC = () => {
           )}
 
           {isLoading ? (
-            <div className="flex items-center justify-center gap-2 py-10 text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" /> Cargando informes...
-            </div>
+            <LoadingState
+              label="Cargando informes..."
+              className="justify-center py-10"
+            />
           ) : filteredReports.length ? (
             <Table>
               <TableHeader>

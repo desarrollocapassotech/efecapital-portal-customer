@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { FirebaseError } from "firebase/app";
+import { Spinner } from "@/components/ui/loading-state";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -197,7 +198,7 @@ const LoginForm = () => {
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Spinner size="sm" className="mr-2 text-primary-foreground" />
                     Iniciando sesión...
                   </>
                 ) : (

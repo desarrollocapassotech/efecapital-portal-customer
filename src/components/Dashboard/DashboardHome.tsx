@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/accordion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUnreadMessages } from "@/contexts/UnreadMessagesContext";
+import { Spinner } from "@/components/ui/loading-state";
 import {
   MessageCircle,
   FileBarChart,
@@ -41,7 +42,7 @@ const getTipoInversorColor = (tipo: string) => {
 const DashboardHome = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { unreadCount } = useUnreadMessages();
+  const { unreadCount, isLoading: isUnreadLoading } = useUnreadMessages();
   const hasUnreadMessages = unreadCount > 0;
   const displayUnreadMessagesCount = unreadCount > 99 ? '99+' : `${unreadCount}`;
 
@@ -71,11 +72,16 @@ const DashboardHome = () => {
         >
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-primary/10 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
           <CardHeader className="relative flex flex-row items-start justify-between">
-            {hasUnreadMessages && (
-              <Badge className="absolute right-4 top-4 min-w-[1.5rem] h-6 px-2 text-xs bg-red-500 text-white flex items-center justify-center">
+            {isUnreadLoading ? (
+              <span className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center" aria-live="polite">
+                <Spinner size="sm" className="text-primary" />
+                <span className="sr-only">Cargando mensajes no leídos</span>
+              </span>
+            ) : hasUnreadMessages ? (
+              <Badge className="absolute right-4 top-4 flex h-6 min-w-[1.5rem] items-center justify-center px-2 text-xs bg-red-500 text-white">
                 {displayUnreadMessagesCount}
               </Badge>
-            )}
+            ) : null}
             <div className="space-y-2">
               <CardTitle className="text-xl font-semibold">Hablar con mi asesora</CardTitle>
               <CardDescription>Abre el chat para mantenerte en contacto con tu asesora financiera.</CardDescription>
