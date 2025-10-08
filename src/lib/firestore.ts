@@ -690,7 +690,7 @@ export const markMessagesAsRead = async (messageIds: string[]): Promise<void> =>
   const batch = writeBatch(db);
   messageIds.forEach((id) => {
     const ref = doc(messagesCol, id);
-    batch.update(ref, { read: true, seen: true, updatedAt: serverTimestamp() });
+    batch.update(ref, { read: true, updatedAt: serverTimestamp() });
   });
   await batch.commit();
 };

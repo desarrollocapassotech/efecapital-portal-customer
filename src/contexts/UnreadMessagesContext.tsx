@@ -30,8 +30,10 @@ export const UnreadMessagesProvider = ({
     const unsubscribe = subscribeToClientMessages(
       userId,
       (messages: Message[]) => {
+        console.log(messages)
+
         const count = messages.filter(
-          (message) => message.isFromAdvisor && !message.read,
+          (message) => message.isFromAdvisor && (!message.read || message.status === 'pendiente'),
         ).length;
 
         setUnreadCount(count);
