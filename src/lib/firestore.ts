@@ -48,14 +48,12 @@ export interface Archivo {
 
 export interface Message {
   id: string;
-  clienteId: string;
-  contenido: string;
-  fecha: string; // ISO
-  remitente: "cliente" | "asesora";
-  estado: "pendiente" | "respondido" | "en_revision" | "enviado";
-  leido: boolean;
-  visto: boolean;
-  archivo?: Archivo;
+  clientId: string;
+  content: string;
+  timestamp: Date;
+  isFromAdvisor: boolean;
+  status: "pendiente" | "respondido" | "en_revision";
+  read?: boolean;
 }
 
 export interface Report {
@@ -108,10 +106,10 @@ const parseTipoInversor = (value: unknown): TipoInversor => {
   return "Moderado";
 };
 
-const parseEstadoMensaje = (value: unknown): Message["estado"] => {
-  const allowed = new Set(["pendiente", "respondido", "en_revision", "enviado"]);
+const parseMessageStatus = (value: unknown): Message["status"] => {
+  const allowed = new Set(["pendiente", "respondido", "en_revision"]);
   const v = parseString(value);
-  return (allowed.has(v) ? (v as Message["estado"]) : "enviado");
+  return allowed.has(v) ? (v as Message["status"]) : "pendiente";
 };
 
 const normalizeNotes = (value: unknown): Array<{ text: string; date: string }> => {
@@ -629,28 +627,14 @@ const mapMessageSnapshot = (
   const clientId = parseString(data.clientId);
   if (!clientId) return null;
 
-  // timestamp canónico -> fecha ISO
-  const fecha = toISO(data.timestamp);
-
-  // isFromAdvisor:boolean -> remitente
-  const remitente: Message["remitente"] = data.isFromAdvisor ? "asesora" : "cliente";
-
-  // status canónico (usamos tus valores)
-  const estado = parseEstadoMensaje(data.status);
-
-  // archivo opcional (si lo guardás colgando del mensaje)
-  const archivo = parseArchivo(data.archivo);
-
   return {
     id: snapshot.id,
-    clienteId: clientId,
-    contenido: parseString(data.content),
-    fecha,
-    remitente,
-    estado,
-    leido: Boolean(data.read),
-    visto: Boolean(data.seen ?? data.read),
-    ...(archivo ? { archivo } : {}),
+    clientId,
+    content: parseString(data.content),
+    timestamp: toDate(data.timestamp),
+    isFromAdvisor: Boolean(data.isFromAdvisor),
+    status: parseMessageStatus(data.status),
+    read: typeof data.read === "boolean" ? data.read : undefined,
   };
 };
 
@@ -672,14 +656,14 @@ export const subscribeToClientMessages = (
       const messages = snapshot.docs
         .map(mapMessageSnapshot)
         .filter((m): m is Message => m !== null)
-        .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+        .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
       onData(messages);
     },
     onError,
   );
 };
 
-// Enviar mensaje como CLIENTE (remitente = "cliente")
+// Enviar mensaje como CLIENTE (isFromAdvisor = false)
 export const sendClientMessage = async (clienteId: string, contenido: string): Promise<void> => {
   const text = contenido.trim();
   if (!text) return;
@@ -688,9 +672,8 @@ export const sendClientMessage = async (clienteId: string, contenido: string): P
     clientId: clienteId,
     content: text,
     isFromAdvisor: false,
-    status: "enviado",
+    status: "pendiente",
     read: false, // el asesor no lo leyó aún
-    seen: false,
     timestamp: serverTimestamp(),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -712,7 +695,7 @@ export const markMessagesAsRead = async (messageIds: string[]): Promise<void> =>
   await batch.commit();
 };
 
-// Contador de no leídos del remitente "asesora" (isFromAdvisor = true)
+// Contador de no leídos de la asesora (isFromAdvisor = true)
 export const subscribeToUnreadMessagesCount = (
   clienteId: string,
   onData: (count: number) => void,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,9 +15,6 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Paperclip,
-  ImageIcon,
-  FileDown,
   Loader2,
   CheckCheck,
   Check,
@@ -50,10 +47,7 @@ const Messages = () => {
         setIsLoading(false);
 
         const unread = fetchedMessages
-          .filter(
-            (msg) =>
-              msg.remitente === "asesora" && (!msg.visto || msg.estado === "pendiente" || !msg.leido),
-          )
+          .filter((msg) => msg.isFromAdvisor && !msg.read)
           .map((msg) => msg.id);
 
         if (unread.length > 0) {
@@ -106,17 +100,16 @@ const Messages = () => {
   };
 
   const getStatusIcon = (msg: Message) => {
-    if (msg.remitente === "cliente") {
-      if (msg.leido) {
+    if (!msg.isFromAdvisor) {
+      if (msg.read) {
         return <CheckCheck className="h-3 w-3 text-green-600" />;
       }
 
       return <Check className="h-3 w-3 text-gray-400" />;
     }
 
-    switch (msg.estado) {
+    switch (msg.status) {
       case "pendiente":
-      case "enviado":
         return <Clock className="h-3 w-3 text-yellow-600" />;
       case "respondido":
         return <CheckCircle className="h-3 w-3 text-green-600" />;
@@ -127,63 +120,11 @@ const Messages = () => {
     }
   };
 
-  const renderMessageContent = (msg: Message) => {
-    if (msg.archivo) {
-      const ext = msg.archivo.nombre.split(".").pop()?.toLowerCase();
-
-      if (ext && ["jpg", "jpeg", "png", "gif"].includes(ext)) {
-        return (
-          <div
-            className="flex items-center gap-3 p-3 bg-background border border-border rounded-lg shadow-sm cursor-pointer hover:shadow transition-shadow"
-            onClick={() => {
-              if (msg.archivo?.url) {
-                window.open(msg.archivo.url, "_blank");
-              }
-            }}
-          >
-            <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
-              <ImageIcon className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-medium truncate">{msg.archivo.nombre}</h4>
-              <p className="text-xs text-muted-foreground">Imagen</p>
-            </div>
-            <FileDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          </div>
-        );
-      }
-
-      if (ext === "pdf") {
-        return (
-          <div
-            className="flex items-center gap-3 p-3 bg-background border border-border rounded-lg shadow-sm cursor-pointer hover:shadow transition-shadow"
-            onClick={() => {
-              if (msg.archivo?.url) {
-                window.open(msg.archivo.url, "_blank");
-              }
-            }}
-          >
-            <div className="w-10 h-10 bg-primary/10 rounded flex items-center justify-center">
-              <Paperclip className="h-6 w-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-medium truncate">{msg.archivo.nombre}</h4>
-              <p className="text-xs text-muted-foreground">Documento PDF</p>
-            </div>
-            <FileDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          </div>
-        );
-      }
-    }
-
-    return <p className="text-sm">{msg.contenido}</p>;
-  };
+  const renderMessageContent = (msg: Message) => <p className="text-sm">{msg.content}</p>;
 
   const sortedMessages = useMemo(
     () =>
-      [...messages].sort(
-        (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
-      ),
+      [...messages].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
     [messages],
   );
 
@@ -210,25 +151,25 @@ const Messages = () => {
               sortedMessages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`max-w-[80%] ${msg.remitente === "cliente" ? "ml-auto" : "mr-auto"}`}
+                  className={`max-w-[80%] ${msg.isFromAdvisor ? "mr-auto" : "ml-auto"}`}
                 >
                   <div
                     className={`p-3 rounded-lg ${
-                      msg.remitente === "cliente"
-                        ? "bg-primary/10 border-l-4 border-primary"
-                        : "bg-muted border-l-4 border-border"
+                      msg.isFromAdvisor
+                        ? "bg-muted border-l-4 border-border"
+                        : "bg-primary/10 border-l-4 border-primary"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium">
-                        {msg.remitente === "cliente" ? "Tú" : "Florencia Foos"}
+                        {msg.isFromAdvisor ? "Florencia Foos" : "Tú"}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {format(new Date(msg.fecha), "dd/MM HH:mm", { locale: es })}
+                        {format(msg.timestamp, "dd/MM HH:mm", { locale: es })}
                       </span>
                     </div>
                     {renderMessageContent(msg)}
-                    {msg.remitente === "cliente" && (
+                    {!msg.isFromAdvisor && (
                       <div className="flex justify-end mt-1">
                         {getStatusIcon(msg)}
                       </div>
