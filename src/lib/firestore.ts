@@ -54,6 +54,7 @@ export interface Message {
   remitente: "cliente" | "asesora";
   estado: "pendiente" | "respondido" | "en_revision" | "enviado";
   leido: boolean;
+  visto: boolean;
   archivo?: Archivo;
 }
 
@@ -648,6 +649,7 @@ const mapMessageSnapshot = (
     remitente,
     estado,
     leido: Boolean(data.read),
+    visto: Boolean(data.seen ?? data.read),
     ...(archivo ? { archivo } : {}),
   };
 };
@@ -705,7 +707,7 @@ export const markMessagesAsRead = async (messageIds: string[]): Promise<void> =>
   const batch = writeBatch(db);
   messageIds.forEach((id) => {
     const ref = doc(messagesCol, id);
-    batch.update(ref, { read: true, updatedAt: serverTimestamp() });
+    batch.update(ref, { read: true, seen: true, updatedAt: serverTimestamp() });
   });
   await batch.commit();
 };

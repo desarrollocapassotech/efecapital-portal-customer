@@ -49,7 +49,10 @@ const Messages = () => {
         setIsLoading(false);
 
         const unread = fetchedMessages
-          .filter((msg) => msg.remitente === "asesora" && !msg.leido)
+          .filter(
+            (msg) =>
+              msg.remitente === "asesora" && (!msg.visto || msg.estado === "pendiente" || !msg.leido),
+          )
           .map((msg) => msg.id);
 
         if (unread.length > 0) {
