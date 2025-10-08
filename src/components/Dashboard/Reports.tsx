@@ -1,17 +1,26 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { AlertTriangle, Download, FileBarChart, Loader2 } from "lucide-react";
+import { AlertTriangle, Download, FileBarChart, Filter, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { subscribeToClientReports, type Report } from "@/lib/firestore";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const Reports: React.FC = () => {
   const { user } = useAuth();
@@ -23,6 +32,7 @@ const Reports: React.FC = () => {
   const [nameFilter, setNameFilter] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [isFiltersDialogOpen, setIsFiltersDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!userId) {
@@ -87,6 +97,40 @@ const Reports: React.FC = () => {
   const hasActiveFilters =
     nameFilter.trim().length > 0 || startDate !== "" || endDate !== "";
 
+  const FiltersForm = ({ className }: { className?: string }) => (
+    <div className={cn("grid gap-4", className)}>
+      <div className="space-y-2">
+        <Label htmlFor="name-filter">Filtrar por nombre</Label>
+        <Input
+          id="name-filter"
+          placeholder="Ej. Informe mensual"
+          value={nameFilter}
+          onChange={(event) => setNameFilter(event.target.value)}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="start-date">Desde</Label>
+        <Input
+          id="start-date"
+          type="date"
+          value={startDate}
+          max={endDate || undefined}
+          onChange={(event) => setStartDate(event.target.value)}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="end-date">Hasta</Label>
+        <Input
+          id="end-date"
+          type="date"
+          value={endDate}
+          min={startDate || undefined}
+          onChange={(event) => setEndDate(event.target.value)}
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className="mt-2 space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -119,36 +163,43 @@ const Reports: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="name-filter">Filtrar por nombre</Label>
-              <Input
-                id="name-filter"
-                placeholder="Ej. Informe mensual"
-                value={nameFilter}
-                onChange={(event) => setNameFilter(event.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="start-date">Desde</Label>
-              <Input
-                id="start-date"
-                type="date"
-                value={startDate}
-                max={endDate || undefined}
-                onChange={(event) => setStartDate(event.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="end-date">Hasta</Label>
-              <Input
-                id="end-date"
-                type="date"
-                value={endDate}
-                min={startDate || undefined}
-                onChange={(event) => setEndDate(event.target.value)}
-              />
-            </div>
+          <div className="flex justify-end md:hidden">
+            <Dialog open={isFiltersDialogOpen} onOpenChange={setIsFiltersDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="icon" aria-label="Abrir filtros">
+                  <Filter className="h-5 w-5" />
+                  <span className="sr-only">Abrir filtros</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Filtros</DialogTitle>
+                </DialogHeader>
+                <FiltersForm />
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                  <Button
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                    onClick={() => {
+                      handleClearFilters();
+                      setIsFiltersDialogOpen(false);
+                    }}
+                    disabled={!hasActiveFilters}
+                  >
+                    Limpiar filtros
+                  </Button>
+                  <DialogClose asChild>
+                    <Button type="button" className="w-full sm:w-auto">
+                      Cerrar
+                    </Button>
+                  </DialogClose>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="hidden md:block">
+            <FiltersForm className="md:grid-cols-3" />
           </div>
 
           {error && (
