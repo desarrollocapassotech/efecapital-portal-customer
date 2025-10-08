@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-import { subscribeToUnreadMessagesCount } from "@/lib/firestore";
+import { subscribeToClientMessages, type Message } from "@/lib/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 
 type UnreadMessagesContextValue = {
@@ -24,12 +24,17 @@ export const UnreadMessagesProvider = ({
   useEffect(() => {
     if (!userId) {
       setUnreadCount(0);
-      return;
+      return undefined;
     }
 
-    const unsubscribe = subscribeToUnreadMessagesCount(
+    const unsubscribe = subscribeToClientMessages(
       userId,
-      (count) => {
+      (messages: Message[]) => {
+        const count = messages.filter(
+          (message) =>
+            message.remitente === "asesora" && (!message.visto || message.estado === "pendiente"),
+        ).length;
+
         setUnreadCount(count);
       },
       (error) => {

@@ -17,6 +17,8 @@ const Sidebar = () => {
   const { logout, user } = useAuth();
   const { unreadCount } = useUnreadMessages();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const hasUnreadMessages = unreadCount > 0;
+  const displayUnreadMessagesCount = unreadCount > 99 ? "99+" : `${unreadCount}`;
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const originalOverflowRef = useRef<string>("");
 
@@ -129,9 +131,9 @@ const Sidebar = () => {
                     >
                       <Icon className="h-5 w-5" />
                       <span className="font-medium">{item.name}</span>
-                      {item.name === "Chat" && unreadCount > 0 && (
+                      {item.name === "Chat" && hasUnreadMessages && (
                         <Badge className="ml-auto bg-red-500 text-white text-xs px-2 min-w-5 h-5 flex items-center justify-center rounded-full">
-                          {unreadCount}
+                          {displayUnreadMessagesCount}
                         </Badge>
                       )}
                     </NavLink>

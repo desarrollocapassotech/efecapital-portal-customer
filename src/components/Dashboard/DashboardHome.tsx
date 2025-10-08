@@ -42,6 +42,8 @@ const DashboardHome = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { unreadCount } = useUnreadMessages();
+  const hasUnreadMessages = unreadCount > 0;
+  const displayUnreadMessagesCount = unreadCount > 99 ? '99+' : `${unreadCount}`;
 
   const fullName = [user?.nombre, user?.apellido].filter(Boolean).join(" ") || "Inversionista";
   const investorType = user?.tipoInversor || "Sin definir";
@@ -69,9 +71,9 @@ const DashboardHome = () => {
         >
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-primary/10 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
           <CardHeader className="relative flex flex-row items-start justify-between">
-            {unreadCount > 0 && (
+            {hasUnreadMessages && (
               <Badge className="absolute right-4 top-4 min-w-[1.5rem] h-6 px-2 text-xs bg-red-500 text-white flex items-center justify-center">
-                {unreadCount}
+                {displayUnreadMessagesCount}
               </Badge>
             )}
             <div className="space-y-2">

@@ -9,6 +9,8 @@ import { useUnreadMessages } from '@/contexts/UnreadMessagesContext';
 const Navbar = () => {
   const { user, logout } = useAuth();
   const { unreadCount } = useUnreadMessages();
+  const hasUnreadMessages = unreadCount > 0;
+  const displayUnreadMessagesCount = unreadCount > 99 ? '99+' : `${unreadCount}`;
 
   return (
     <nav className="bg-card border-b border-border px-4 py-3 shadow-sm z-20">
@@ -83,9 +85,9 @@ const Navbar = () => {
               aria-label="Abrir chat"
             >
               <MessageSquare className="h-5 w-5" />
-              {unreadCount > 0 && (
+              {hasUnreadMessages && (
                 <Badge className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1.5 text-[10px] leading-none bg-red-500 text-white flex items-center justify-center">
-                  {unreadCount}
+                  {displayUnreadMessagesCount}
                 </Badge>
               )}
             </Link>
