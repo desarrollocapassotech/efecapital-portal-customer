@@ -15,13 +15,13 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Loader2,
   CheckCheck,
   Check,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
+import { LoadingState, Spinner } from "@/components/ui/loading-state";
 
 const Messages = () => {
   const { user } = useAuth();
@@ -143,10 +143,10 @@ const Messages = () => {
         <CardContent className="flex-1 flex flex-col p-0 h-full">
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {isLoading ? (
-              <div className="flex h-full items-center justify-center text-muted-foreground gap-2">
-                <Loader2 className="h-5 w-5 animate-spin" />
-                Cargando mensajes...
-              </div>
+              <LoadingState
+                label="Cargando mensajes..."
+                className="h-full justify-center"
+              />
             ) : sortedMessages.length > 0 ? (
               sortedMessages.map((msg) => (
                 <div
@@ -206,7 +206,7 @@ const Messages = () => {
                 size="icon"
               >
                 {isSending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Spinner size="sm" className="text-primary" />
                 ) : (
                   <Send className="h-4 w-4" />
                 )}

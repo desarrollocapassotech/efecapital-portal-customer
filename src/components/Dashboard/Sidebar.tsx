@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useUnreadMessages } from "@/contexts/UnreadMessagesContext";
+import { Spinner } from "@/components/ui/loading-state";
 
 const navigation = [
   { name: "Inicio", href: "/dashboard", icon: Home },
@@ -15,7 +16,7 @@ const navigation = [
 const Sidebar = () => {
   const location = useLocation();
   const { logout, user } = useAuth();
-  const { unreadCount } = useUnreadMessages();
+  const { unreadCount, isLoading: isUnreadLoading } = useUnreadMessages();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const hasUnreadMessages = unreadCount > 0;
   const displayUnreadMessagesCount = unreadCount > 99 ? "99+" : `${unreadCount}`;
@@ -131,10 +132,17 @@ const Sidebar = () => {
                     >
                       <Icon className="h-5 w-5" />
                       <span className="font-medium">{item.name}</span>
-                      {item.name === "Chat" && hasUnreadMessages && (
-                        <Badge className="ml-auto bg-red-500 text-white text-xs px-2 min-w-5 h-5 flex items-center justify-center rounded-full">
-                          {displayUnreadMessagesCount}
-                        </Badge>
+                      {item.name === "Chat" && (
+                        isUnreadLoading ? (
+                          <span className="ml-auto flex h-5 w-5 items-center justify-center" aria-live="polite">
+                            <Spinner size="sm" className="text-primary" />
+                            <span className="sr-only">Cargando mensajes no leídos</span>
+                          </span>
+                        ) : hasUnreadMessages ? (
+                          <Badge className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-2 text-xs text-white">
+                            {displayUnreadMessagesCount}
+                          </Badge>
+                        ) : null
                       )}
                     </NavLink>
                   </li>
