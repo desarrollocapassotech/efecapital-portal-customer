@@ -14,7 +14,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 
 const Reports: React.FC = () => {
   const { user } = useAuth();
-  const { reports, isLoading, markReportAsDownloaded, latestReport } = useUnreadReports();
+  const { reports, isLoading, markReportAsDownloaded, markReportAsViewed, latestReport } = useUnreadReports();
   const [error, setError] = useState<string | null>(null);
 
 
@@ -24,6 +24,9 @@ const Reports: React.FC = () => {
     // Marcar como descargado
     markReportAsDownloaded(report.id);
   };
+
+  // Ya no marcamos automáticamente como visto al entrar
+  // Solo se marca como descargado cuando el usuario descarga el informe
 
   return (
     <div className="mt-2 space-y-4 sm:space-y-6 px-4 sm:px-0">

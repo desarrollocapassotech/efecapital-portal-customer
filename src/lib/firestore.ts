@@ -65,6 +65,8 @@ export interface Report {
   descripcion?: string;
   downloaded?: boolean;
   downloadedAt?: string;
+  viewed?: boolean;
+  viewedAt?: string;
 }
 
 export interface ClienteProfile {
@@ -553,6 +555,12 @@ const mapReportSnapshot = (
     parseOptionalString(data.description) ??
     parseOptionalString((data.archivo as Record<string, unknown> | undefined)?.descripcion);
 
+  // Verificar si el cliente ha visto/descargado este informe
+  const viewedBy = data.viewedBy || {};
+  const downloadedBy = data.downloadedBy || {};
+  const clientViewed = viewedBy[clientId];
+  const clientDownloaded = downloadedBy[clientId];
+
   return {
     id: snapshot.id,
     clienteId: clientId,
@@ -560,7 +568,153 @@ const mapReportSnapshot = (
     fecha,
     archivo,
     ...(descripcion ? { descripcion } : {}),
+    ...(clientDownloaded ? { 
+      downloaded: Boolean(clientDownloaded.downloaded),
+      downloadedAt: clientDownloaded.downloadedAt ? toISO(clientDownloaded.downloadedAt) : undefined
+    } : {}),
+    ...(clientViewed ? { 
+      viewed: Boolean(clientViewed.viewed),
+      viewedAt: clientViewed.viewedAt ? toISO(clientViewed.viewedAt) : undefined
+    } : {}),
   };
+};
+
+export const markReportAsViewed = async (
+  clienteId: string,
+  reportId: string,
+): Promise<void> => {
+  if (!clienteId || !reportId) {
+    throw new Error("clienteId y reportId son requeridos");
+  }
+
+  try {
+    // Buscar el informe en la colección de documentos usando el ID del documento
+    const docRef = doc(db, "documents", reportId);
+    const docSnapshot = await getDoc(docRef);
+    
+    if (docSnapshot.exists()) {
+      const data = docSnapshot.data();
+      
+      // Verificar que el cliente está en el array clientIds
+      if (data.clientIds && Array.isArray(data.clientIds) && data.clientIds.includes(clienteId)) {
+        // Actualizar el documento agregando el campo viewed para este cliente específico
+        const viewedBy = data.viewedBy || {};
+        viewedBy[clienteId] = {
+          viewed: true,
+          viewedAt: serverTimestamp(),
+        };
+        
+        await updateDoc(docRef, {
+          viewedBy: viewedBy,
+        });
+        console.log('Informe marcado como visto en documents:', reportId);
+        return;
+      }
+    }
+
+    // Si no se encuentra en documents, buscar en la colección legacy
+    const legacyQuery = query(
+      collection(db, "clientes"),
+      where("id", "==", clienteId)
+    );
+    
+    const legacySnapshot = await getDocs(legacyQuery);
+    
+    if (!legacySnapshot.empty) {
+      const clienteDoc = legacySnapshot.docs[0];
+      const clienteData = clienteDoc.data();
+      
+      if (clienteData.informes && Array.isArray(clienteData.informes)) {
+        const updatedInformes = clienteData.informes.map((informe: any) => {
+          if (informe.id === reportId) {
+            return {
+              ...informe,
+              viewed: true,
+              viewedAt: new Date().toISOString(),
+            };
+          }
+          return informe;
+        });
+
+        await updateDoc(clienteDoc.ref, {
+          informes: updatedInformes,
+        });
+        console.log('Informe marcado como visto en legacy:', reportId);
+      }
+    }
+  } catch (error) {
+    console.error("Error al marcar informe como visto:", error);
+    throw error;
+  }
+};
+
+export const markReportAsDownloaded = async (
+  clienteId: string,
+  reportId: string,
+): Promise<void> => {
+  if (!clienteId || !reportId) {
+    throw new Error("clienteId y reportId son requeridos");
+  }
+
+  try {
+    // Buscar el informe en la colección de documentos usando el ID del documento
+    const docRef = doc(db, "documents", reportId);
+    const docSnapshot = await getDoc(docRef);
+    
+    if (docSnapshot.exists()) {
+      const data = docSnapshot.data();
+      
+      // Verificar que el cliente está en el array clientIds
+      if (data.clientIds && Array.isArray(data.clientIds) && data.clientIds.includes(clienteId)) {
+        // Actualizar el documento agregando el campo downloaded para este cliente específico
+        const downloadedBy = data.downloadedBy || {};
+        downloadedBy[clienteId] = {
+          downloaded: true,
+          downloadedAt: serverTimestamp(),
+        };
+        
+        await updateDoc(docRef, {
+          downloadedBy: downloadedBy,
+        });
+        console.log('Informe marcado como descargado en documents:', reportId);
+        return;
+      }
+    }
+
+    // Si no se encuentra en documents, buscar en la colección legacy
+    const legacyQuery = query(
+      collection(db, "clientes"),
+      where("id", "==", clienteId)
+    );
+    
+    const legacySnapshot = await getDocs(legacyQuery);
+    
+    if (!legacySnapshot.empty) {
+      const clienteDoc = legacySnapshot.docs[0];
+      const clienteData = clienteDoc.data();
+      
+      if (clienteData.informes && Array.isArray(clienteData.informes)) {
+        const updatedInformes = clienteData.informes.map((informe: any) => {
+          if (informe.id === reportId) {
+            return {
+              ...informe,
+              downloaded: true,
+              downloadedAt: new Date().toISOString(),
+            };
+          }
+          return informe;
+        });
+
+        await updateDoc(clienteDoc.ref, {
+          informes: updatedInformes,
+        });
+        console.log('Informe marcado como descargado en legacy:', reportId);
+      }
+    }
+  } catch (error) {
+    console.error("Error al marcar informe como descargado:", error);
+    throw error;
+  }
 };
 
 export const subscribeToClientReports = (

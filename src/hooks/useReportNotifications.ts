@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useUnreadReports } from '@/contexts/UnreadReportsContext';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useNotificationPersistence } from '@/hooks/useNotificationPersistence';
 
 export const useReportNotifications = () => {
   const { badgeCount, latestReport } = useUnreadReports();
@@ -16,8 +17,9 @@ export const useReportNotifications = () => {
       return;
     }
 
-    // Solo mostrar notificación si hay un nuevo informe (badge cambió de 0 a 1)
+    // Solo mostrar notificación si el badge cambió de 0 a 1 (nuevo informe no descargado)
     if (badgeCount === 1 && previousBadgeCountRef.current === 0) {
+      console.log('useReportNotifications - Mostrando notificación para nuevo informe no descargado:', latestReport?.id);
       if (isSupported) {
         showReportNotification();
       }
@@ -25,5 +27,5 @@ export const useReportNotifications = () => {
 
     // Actualizar el contador anterior
     previousBadgeCountRef.current = badgeCount;
-  }, [badgeCount, showReportNotification, isSupported]);
+  }, [badgeCount, latestReport, showReportNotification, isSupported]);
 };
