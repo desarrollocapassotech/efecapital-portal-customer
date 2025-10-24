@@ -30,6 +30,7 @@ const Messages = () => {
   const [newMessage, setNewMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -79,23 +80,36 @@ const Messages = () => {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !userId) {
+    if (!newMessage.trim() || !userId || isSending) {
       return;
     }
 
+    const messageContent = newMessage.trim();
+    
+    // Limpiar input inmediatamente
+    setNewMessage("");
+    
+    // Mostrar mensaje temporal con loader
+    setPendingMessage(messageContent);
+    
+    // Bloquear interfaz
     setIsSending(true);
+    
     try {
-      await sendClientMessage(userId, newMessage);
-      setNewMessage("");
+      await sendClientMessage(userId, messageContent);
     } catch (error) {
       console.error("Error al enviar el mensaje", error);
+      // Restaurar el mensaje en el input si hay error
+      setNewMessage(messageContent);
       toast({
         title: "No se pudo enviar el mensaje",
         description: "Revisa tu conexión e intenta nuevamente.",
         variant: "destructive",
       });
     } finally {
+      // Limpiar estado de envío
       setIsSending(false);
+      setPendingMessage(null);
     }
   };
 
@@ -147,36 +161,57 @@ const Messages = () => {
                 label="Cargando mensajes..."
                 className="h-full justify-center"
               />
-            ) : sortedMessages.length > 0 ? (
-              sortedMessages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`max-w-[80%] ${msg.isFromAdvisor ? "mr-auto" : "ml-auto"}`}
-                >
+            ) : sortedMessages.length > 0 || pendingMessage ? (
+              <>
+                {sortedMessages.map((msg) => (
                   <div
-                    className={`p-3 rounded-lg ${
-                      msg.isFromAdvisor
-                        ? "bg-muted border-l-4 border-border"
-                        : "bg-primary/10 border-l-4 border-primary"
-                    }`}
+                    key={msg.id}
+                    className={`max-w-[80%] ${msg.isFromAdvisor ? "mr-auto" : "ml-auto"}`}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">
-                        {msg.isFromAdvisor ? "Florencia Foos" : "Tú"}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {format(msg.timestamp, "dd/MM HH:mm", { locale: es })}
-                      </span>
-                    </div>
-                    {renderMessageContent(msg)}
-                    {!msg.isFromAdvisor && (
-                      <div className="flex justify-end mt-1">
-                        {getStatusIcon(msg)}
+                    <div
+                      className={`p-3 rounded-lg ${
+                        msg.isFromAdvisor
+                          ? "bg-muted border-l-4 border-border"
+                          : "bg-primary/10 border-l-4 border-primary"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">
+                          {msg.isFromAdvisor ? "Florencia Foos" : "Tú"}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {format(msg.timestamp, "dd/MM HH:mm", { locale: es })}
+                        </span>
                       </div>
-                    )}
+                      {renderMessageContent(msg)}
+                      {!msg.isFromAdvisor && (
+                        <div className="flex justify-end mt-1">
+                          {getStatusIcon(msg)}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+                
+                {/* Mensaje temporal con loader */}
+                {pendingMessage && (
+                  <div className="max-w-[80%] ml-auto">
+                    <div className="p-3 rounded-lg bg-primary/10 border-l-4 border-primary opacity-75">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Tú</span>
+                        <div className="flex items-center gap-1">
+                          <Spinner size="sm" className="text-primary" />
+                          <span className="text-xs text-muted-foreground">Enviando...</span>
+                        </div>
+                      </div>
+                      <p className="text-sm">{pendingMessage}</p>
+                      <div className="flex justify-end mt-1">
+                        <Clock className="h-3 w-3 text-gray-400" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <p className="text-center text-muted-foreground py-4">
                 No hay mensajes todavía
@@ -188,17 +223,18 @@ const Messages = () => {
           <div className="border-t p-4 space-y-3 bg-background">
             <div className="flex items-end gap-2">
               <Textarea
-                placeholder="Escribir nuevo mensaje..."
+                placeholder={isSending ? "Enviando mensaje..." : "Escribir nuevo mensaje..."}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
+                  if (e.key === "Enter" && !e.shiftKey && !isSending) {
                     e.preventDefault();
                     handleSendMessage();
                   }
                 }}
                 rows={3}
                 className="flex-1 resize-none"
+                disabled={isSending}
               />
               <Button
                 onClick={handleSendMessage}
