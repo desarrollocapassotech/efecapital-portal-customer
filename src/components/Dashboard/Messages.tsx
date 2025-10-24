@@ -46,16 +46,6 @@ const Messages = () => {
       (fetchedMessages) => {
         setMessages(fetchedMessages);
         setIsLoading(false);
-
-        const unread = fetchedMessages
-          .filter((msg) => msg.isFromAdvisor && !msg.read)
-          .map((msg) => msg.id);
-
-        if (unread.length > 0) {
-          markMessagesAsRead(unread).catch((error) => {
-            console.error("Error al marcar mensajes como leídos", error);
-          });
-        }
       },
       (error) => {
         console.error("Error al cargar los mensajes", error);
@@ -78,6 +68,21 @@ const Messages = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Marcar mensajes como leídos cuando el usuario entra a la sección
+  useEffect(() => {
+    if (messages.length > 0 && userId) {
+      const unread = messages
+        .filter((msg) => msg.isFromAdvisor && !msg.read)
+        .map((msg) => msg.id);
+
+      if (unread.length > 0) {
+        markMessagesAsRead(unread).catch((error) => {
+          console.error("Error al marcar mensajes como leídos", error);
+        });
+      }
+    }
+  }, [userId]); // Solo se ejecuta cuando el usuario entra a la sección
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !userId || isSending) {

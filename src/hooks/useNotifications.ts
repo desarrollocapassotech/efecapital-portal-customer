@@ -89,10 +89,22 @@ export const useNotifications = () => {
   };
 
   const showIndividualMessageNotification = (messageContent: string) => {
+    console.log('showIndividualMessageNotification - Llamada con contenido:', messageContent);
+    console.log('showIndividualMessageNotification - isSupported:', isSupported);
+    console.log('showIndividualMessageNotification - permission:', permissionRef.current);
+    
+    // Verificar si las notificaciones están permitidas
+    if (!('Notification' in window) || permissionRef.current !== 'granted') {
+      console.log('showIndividualMessageNotification - Notificaciones no disponibles o no permitidas');
+      return;
+    }
+
     // Truncar el contenido si es muy largo
     const truncatedContent = messageContent.length > 100 
       ? messageContent.substring(0, 100) + '...'
       : messageContent;
+
+    console.log('showIndividualMessageNotification - Mostrando notificación con contenido:', truncatedContent);
 
     showNotification({
       title: 'Nuevo mensaje de tu asesora',
