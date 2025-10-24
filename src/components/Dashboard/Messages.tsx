@@ -76,13 +76,19 @@ const Messages = () => {
         .filter((msg) => msg.isFromAdvisor && !msg.read)
         .map((msg) => msg.id);
 
+      console.log('Messages - Mensajes no leídos encontrados:', unread.length);
+      console.log('Messages - IDs de mensajes no leídos:', unread);
+
       if (unread.length > 0) {
-        markMessagesAsRead(unread).catch((error) => {
+        console.log('Messages - Marcando mensajes como leídos...');
+        markMessagesAsRead(unread).then(() => {
+          console.log('Messages - Mensajes marcados como leídos exitosamente');
+        }).catch((error) => {
           console.error("Error al marcar mensajes como leídos", error);
         });
       }
     }
-  }, [userId]); // Solo se ejecuta cuando el usuario entra a la sección
+  }, [messages, userId]); // Se ejecuta cuando cambian los mensajes o el usuario
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !userId || isSending) {

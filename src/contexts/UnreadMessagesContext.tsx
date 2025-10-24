@@ -28,6 +28,14 @@ export const UnreadMessagesProvider = ({
 
   // Calcular mensajes no leídos
   const unreadCount = messages.filter(msg => msg.isFromAdvisor && !msg.read).length;
+  
+  // Log para debuggear el contador
+  useEffect(() => {
+    console.log('UnreadMessagesContext - Contador actualizado:', unreadCount);
+    console.log('UnreadMessagesContext - Total mensajes:', messages.length);
+    console.log('UnreadMessagesContext - Mensajes del asesor:', messages.filter(msg => msg.isFromAdvisor).length);
+    console.log('UnreadMessagesContext - Mensajes no leídos del asesor:', messages.filter(msg => msg.isFromAdvisor && !msg.read).length);
+  }, [unreadCount, messages]);
 
   useEffect(() => {
     if (!userId) {
