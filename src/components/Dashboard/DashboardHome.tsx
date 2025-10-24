@@ -24,6 +24,11 @@ import {
   User,
   Building2,
   Sparkles,
+  Mail,
+  Phone,
+  Calendar,
+  Clock,
+  StickyNote,
 } from "lucide-react";
 
 const getTipoInversorColor = (tipo: string) => {
@@ -39,6 +44,34 @@ const getTipoInversorColor = (tipo: string) => {
   }
 };
 
+const formatDate = (dateValue: string | Date) => {
+  try {
+    const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+    return date.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch {
+    return typeof dateValue === 'string' ? dateValue : dateValue.toString();
+  }
+};
+
+const formatNotes = (notes: any[]) => {
+  if (!notes || notes.length === 0) return null;
+  
+  return notes.map((note, index) => (
+    <div key={index} className="border-l-2 border-primary/20 pl-3 py-2">
+      <div className="text-xs text-muted-foreground mb-1">
+        {formatDate(note.date)}
+      </div>
+      <div className="text-sm">{note.text}</div>
+    </div>
+  ));
+};
+
 const DashboardHome = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -49,6 +82,11 @@ const DashboardHome = () => {
   const fullName = [user?.nombre, user?.apellido].filter(Boolean).join(" ") || "Inversionista";
   const investorType = user?.tipoInversor || "Sin definir";
   const brokerName = user?.broker?.nombre || user?.brokerId || "Sin asignar";
+  const email = user?.email;
+  const phone = user?.telefono;
+  const investmentHorizon = user?.horizonte;
+  const lastContact = user?.lastContact;
+  const notes = user?.notes;
   const objetivosContent = user?.objetivos?.trim()
     ? user.objetivos
     : "Comparte tus objetivos financieros con tu asesora para recibir recomendaciones personalizadas.";
@@ -84,7 +122,6 @@ const DashboardHome = () => {
             ) : null}
             <div className="space-y-2">
               <CardTitle className="text-xl font-semibold">Hablar con mi asesora</CardTitle>
-              <CardDescription>Abre el chat para mantenerte en contacto con tu asesora financiera.</CardDescription>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
               <MessageCircle className="h-6 w-6" />
@@ -105,8 +142,7 @@ const DashboardHome = () => {
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-primary/15 via-transparent to-primary/5 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
           <CardHeader className="relative flex flex-row items-start justify-between">
             <div className="space-y-2">
-              <CardTitle className="text-xl font-semibold">Mis informes</CardTitle>
-              <CardDescription>Consulta los reportes y documentos que comparte tu asesora contigo.</CardDescription>
+              <CardTitle className="text-xl font-semibold">Informes</CardTitle>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
               <FileBarChart className="h-6 w-6" />
@@ -122,9 +158,11 @@ const DashboardHome = () => {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <CardTitle className="text-lg font-semibold">Mis objetivos</CardTitle>
-                <CardDescription>Revisa tus metas financieras cuando lo necesites.</CardDescription>
               </div>
-              <Target className="h-6 w-6 text-muted-foreground" />
+
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Target className="h-6 w-6" />
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -147,28 +185,107 @@ const DashboardHome = () => {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <CardTitle className="text-lg font-semibold">Mi perfil</CardTitle>
-                <CardDescription>Información esencial de tu cuenta.</CardDescription>
               </div>
-              <User className="h-6 w-6 text-muted-foreground" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <User className="h-6 w-6" />
+              </div>
             </div>
           </CardHeader>
           <CardContent>
-            <dl className="space-y-4 text-sm">
-              <div className="flex items-start justify-between gap-4">
-                <dt className="text-muted-foreground">Nombre completo</dt>
-                <dd className="font-medium text-right text-foreground">{fullName}</dd>
-              </div>
-              <div className="flex items-start justify-between gap-4">
-                <dt className="text-muted-foreground">Perfil de inversor</dt>
-                <dd>
-                  <Badge className={getTipoInversorColor(investorType)}>{investorType}</Badge>
-                </dd>
-              </div>
-              <div className="flex items-start justify-between gap-4">
-                <dt className="text-muted-foreground">Bróker</dt>
-                <dd className="font-medium text-right text-foreground">{brokerName}</dd>
-              </div>
-            </dl>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="perfil">
+                <AccordionTrigger className="text-left text-sm font-medium">Ver información completa</AccordionTrigger>
+                <AccordionContent>
+                  <dl className="space-y-4 text-sm">
+                    {/* Información básica */}
+                    <div className="flex items-start justify-between gap-4">
+                      <dt className="text-muted-foreground flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Nombre completo
+                      </dt>
+                      <dd className="font-medium text-right text-foreground">{fullName}</dd>
+                    </div>
+
+                    {/* Email */}
+                    {email && (
+                      <div className="flex items-start justify-between gap-4">
+                        <dt className="text-muted-foreground flex items-center gap-2">
+                          <Mail className="h-4 w-4" />
+                          Email
+                        </dt>
+                        <dd className="font-medium text-right text-foreground">{email}</dd>
+                      </div>
+                    )}
+
+                    {/* Teléfono */}
+                    {phone && (
+                      <div className="flex items-start justify-between gap-4">
+                        <dt className="text-muted-foreground flex items-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          Teléfono
+                        </dt>
+                        <dd className="font-medium text-right text-foreground">{phone}</dd>
+                      </div>
+                    )}
+
+                    {/* Perfil de inversor */}
+                    <div className="flex items-start justify-between gap-4">
+                      <dt className="text-muted-foreground flex items-center gap-2">
+                        <Target className="h-4 w-4" />
+                        Perfil de inversor
+                      </dt>
+                      <dd>
+                        <Badge className={getTipoInversorColor(investorType)}>{investorType}</Badge>
+                      </dd>
+                    </div>
+
+                    {/* Horizonte de inversión */}
+                    {investmentHorizon && (
+                      <div className="flex items-start justify-between gap-4">
+                        <dt className="text-muted-foreground flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          Horizonte de inversión
+                        </dt>
+                        <dd className="font-medium text-right text-foreground">{investmentHorizon}</dd>
+                      </div>
+                    )}
+
+                    {/* Bróker */}
+                    <div className="flex items-start justify-between gap-4">
+                      <dt className="text-muted-foreground flex items-center gap-2">
+                        <Building2 className="h-4 w-4" />
+                        Bróker
+                      </dt>
+                      <dd className="font-medium text-right text-foreground">{brokerName}</dd>
+                    </div>
+
+                    {/* Último contacto */}
+                    {lastContact && (
+                      <div className="flex items-start justify-between gap-4">
+                        <dt className="text-muted-foreground flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          Último contacto
+                        </dt>
+                        <dd className="font-medium text-right text-foreground">{formatDate(lastContact)}</dd>
+                      </div>
+                    )}
+
+                    {/* Notas */}
+                    {notes && notes.length > 0 && (
+                      <div className="space-y-2">
+                        <dt className="text-muted-foreground flex items-center gap-2">
+                          <StickyNote className="h-4 w-4" />
+                          Notas
+                        </dt>
+                        <dd className="space-y-2">
+                          {formatNotes(notes)}
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </CardContent>
         </Card>
       </div>

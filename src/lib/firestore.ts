@@ -76,6 +76,8 @@ export interface ClienteProfile {
   horizonte: string;
   brokerId?: string | null;    // mapeado desde 'broker' (texto) si existiera coincidencia
   broker?: Broker | null;
+  lastContact?: string | Date;
+  notes?: Array<{ text: string; date: string }>;
 }
 
 // -----------------------------
@@ -208,6 +210,8 @@ const mapClientSnapshot = async (snap: DocumentSnapshot<DocumentData>): Promise<
     horizonte: parseString(data.investmentHorizon),
     brokerId,
     broker,
+    lastContact: data.lastContact ? toISO(data.lastContact) : undefined,
+    notes: normalizeNotes(data.notes),
   };
 };
 

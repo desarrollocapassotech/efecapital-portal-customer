@@ -99,9 +99,6 @@ const LoginForm = () => {
               <img src="logo11.png" alt="Logo" className='w-24' />
             </div>
           </div>
-          <p className="text-foreground/80">
-            Tu plataforma de asesoría financiera
-          </p>
         </div>
 
         <Card className="backdrop-blur-sm bg-white/95 border-0 shadow-elegant">
@@ -109,9 +106,6 @@ const LoginForm = () => {
             <CardTitle className="text-2xl font-bold text-center text-financial-navy">
               Iniciar sesión
             </CardTitle>
-            <CardDescription className="text-center">
-              Accede a tu panel de inversiones
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
