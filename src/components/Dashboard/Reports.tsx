@@ -1,25 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { AlertTriangle, Download, FileBarChart, Filter } from "lucide-react";
+import { AlertTriangle, Download, FileBarChart, FileText } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { subscribeToClientReports, type Report } from "@/lib/firestore";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/loading-state";
 
 const Reports: React.FC = () => {
@@ -29,13 +18,6 @@ const Reports: React.FC = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [nameFilter, setNameFilter] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [nameFilterInput, setNameFilterInput] = useState("");
-  const [startDateInput, setStartDateInput] = useState("");
-  const [endDateInput, setEndDateInput] = useState("");
-  const [isFiltersDialogOpen, setIsFiltersDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!userId) {
@@ -70,102 +52,35 @@ const Reports: React.FC = () => {
     )[0];
   }, [reports]);
 
-  const filteredReports = useMemo(() => {
-    const normalizedName = nameFilter.trim().toLowerCase();
-    const start = startDate ? new Date(`${startDate}T00:00:00`) : null;
-    const end = endDate ? new Date(`${endDate}T23:59:59`) : null;
-
-    return reports.filter((report) => {
-      const reportDate = new Date(report.fecha);
-      const matchesName = normalizedName
-        ? report.nombre.toLowerCase().includes(normalizedName)
-        : true;
-      const matchesStart = start ? reportDate >= start : true;
-      const matchesEnd = end ? reportDate <= end : true;
-      return matchesName && matchesStart && matchesEnd;
-    });
-  }, [reports, nameFilter, startDate, endDate]);
-
   const handleDownloadReport = (report?: Report | null) => {
     if (!report || !report.archivo?.url) return;
     window.open(report.archivo.url, "_blank", "noopener,noreferrer");
   };
 
-  const handleApplyFilters = () => {
-    setNameFilter(nameFilterInput);
-    setStartDate(startDateInput);
-    setEndDate(endDateInput);
-  };
-
-  const handleClearFilters = () => {
-    setNameFilter("");
-    setStartDate("");
-    setEndDate("");
-    setNameFilterInput("");
-    setStartDateInput("");
-    setEndDateInput("");
-  };
-
-  const hasActiveFilters =
-    nameFilter.trim().length > 0 || startDate !== "" || endDate !== "";
-
-  const hasPendingFilterChanges =
-    nameFilterInput !== nameFilter ||
-    startDateInput !== startDate ||
-    endDateInput !== endDate;
-
-  const hasInputFilters =
-    nameFilterInput.trim().length > 0 ||
-    startDateInput !== "" ||
-    endDateInput !== "";
-
-  const canClearFilters = hasActiveFilters || hasInputFilters;
-
-  const FiltersFields = ({ className }: { className?: string }) => (
-    <div className={cn("grid gap-4", className)}>
-      <div className="space-y-2">
-        <Label htmlFor="start-date">Desde</Label>
-        <Input
-          id="start-date"
-          type="date"
-          value={startDateInput}
-          max={endDateInput || undefined}
-          onChange={(event) => setStartDateInput(event.target.value)}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="end-date">Hasta</Label>
-        <Input
-          id="end-date"
-          type="date"
-          value={endDateInput}
-          min={startDateInput || undefined}
-          onChange={(event) => setEndDateInput(event.target.value)}
-        />
-      </div>
-    </div>
-  );
-
   return (
-    <div className="mt-2 space-y-6">
+    <div className="mt-2 space-y-4 sm:space-y-6 px-4 sm:px-0">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <div className="rounded-full bg-primary/10 p-3 text-primary">
-            <FileBarChart className="h-6 w-6" />
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="rounded-full bg-primary/10 p-2 sm:p-3 text-primary">
+            <FileBarChart className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Mis informes</h1>
-            <p className="text-muted-foreground">
-              Consulta y descarga los reportes que tu asesora comparte contigo.
-            </p>
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Informes</h1>
           </div>
         </div>
         <Button
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white shadow-lg shadow-emerald-500/25 transition-all duration-200 text-sm sm:text-base"
           onClick={() => handleDownloadReport(latestReport)}
           disabled={!latestReport}
         >
-          <Download className="mr-2 h-4 w-4" /> Descargar último informe
+          <div className="flex items-center gap-2">
+            <div className="flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded bg-white/20">
+              <FileText className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+            </div>
+            <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">Descargar último informe</span>
+            <span className="xs:hidden">Último informe</span>
+          </div>
         </Button>
       </div>
 
@@ -174,49 +89,6 @@ const Reports: React.FC = () => {
           <CardTitle>Historial de informes</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex justify-end md:hidden">
-            <Dialog open={isFiltersDialogOpen} onOpenChange={setIsFiltersDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="icon" aria-label="Abrir filtros">
-                  <Filter className="h-5 w-5" />
-                  <span className="sr-only">Abrir filtros</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Filtros</DialogTitle>
-                </DialogHeader>
-                <FiltersFields />
-                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                  <Button
-                    variant="outline"
-                    className="w-full sm:w-auto"
-                    onClick={() => {
-                      handleClearFilters();
-                      setIsFiltersDialogOpen(false);
-                    }}
-                    disabled={!canClearFilters}
-                  >
-                    Limpiar filtros
-                  </Button>
-                  <DialogClose asChild>
-                    <Button type="button" className="w-full sm:w-auto">
-                      Cerrar
-                    </Button>
-                  </DialogClose>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          <div className="hidden md:flex md:flex-wrap md:items-end md:gap-4">
-            <FiltersFields className="md:grid-cols-3 md:flex-1" />
-            <div className="ml-auto flex gap-2">
-              <Button variant="outline" onClick={handleClearFilters} disabled={!canClearFilters}>
-                Limpiar filtros
-              </Button>
-            </div>
-          </div>
 
           {error && (
             <Alert variant="destructive">
@@ -231,48 +103,120 @@ const Reports: React.FC = () => {
               label="Cargando informes..."
               className="justify-center py-10"
             />
-          ) : filteredReports.length ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead className="text-right">Descargar</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredReports.map((report) => (
-                  <TableRow key={report.id}>
-                    <TableCell className="font-medium">{report.nombre}</TableCell>
-                    <TableCell>
-                      {format(new Date(report.fecha), "dd 'de' MMMM 'de' yyyy", { locale: es })}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
+          ) : reports.length ? (
+            <>
+              {/* Vista de tabla para desktop */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12"></TableHead>
+                      <TableHead>Documento</TableHead>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead className="text-right">Acción</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {reports.map((report) => (
+                      <TableRow 
+                        key={report.id}
+                        className="group cursor-pointer hover:bg-muted/50 transition-colors duration-200"
                         onClick={() => handleDownloadReport(report)}
                       >
-                        <Download className="mr-2 h-4 w-4" /> Descargar
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                        <TableCell className="w-12">
+                          <div className="flex items-center justify-center">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-red-100 text-red-600 shadow-sm group-hover:bg-red-200 group-hover:shadow-md transition-all duration-200">
+                              <FileText className="h-4 w-4" />
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <span className="group-hover:text-primary transition-colors duration-200">
+                              {report.nombre}
+                            </span>
+                            <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+                              PDF
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {format(new Date(report.fecha), "dd 'de' MMMM 'de' yyyy", { locale: es })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownloadReport(report);
+                            }}
+                            className="group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-200"
+                          >
+                            <Download className="mr-2 h-4 w-4" /> Descargar
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Vista de cards para mobile */}
+              <div className="md:hidden space-y-3">
+                {reports.map((report) => (
+                  <div
+                    key={report.id}
+                    className="group cursor-pointer rounded-lg border border-border bg-card p-4 hover:bg-muted/50 transition-all duration-200 hover:shadow-md"
+                    onClick={() => handleDownloadReport(report)}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 text-red-600 shadow-sm group-hover:bg-red-200 group-hover:shadow-md transition-all duration-200">
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium text-sm group-hover:text-primary transition-colors duration-200 truncate">
+                            {report.nombre}
+                          </h3>
+                          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full flex-shrink-0">
+                            PDF
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          {format(new Date(report.fecha), "dd 'de' MMMM 'de' yyyy", { locale: es })}
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownloadReport(report);
+                          }}
+                          className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-200"
+                        >
+                          <Download className="mr-2 h-4 w-4" /> Descargar PDF
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            </>
           ) : (
-            <div className="rounded-lg border border-dashed border-border py-10 text-center">
-              <p className="text-sm text-muted-foreground">
-                No encontramos informes.
-              </p>
-              <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Button
-                  variant="outline"
-                  onClick={handleClearFilters}
-                  disabled={!canClearFilters}
-                >
-                  Limpiar filtros
-                </Button>
+            <div className="rounded-lg border border-dashed border-border py-8 sm:py-10 text-center">
+              <div className="flex flex-col items-center gap-3 sm:gap-4">
+                <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                  <FileText className="h-5 w-5 sm:h-6 sm:w-6" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    No tienes informes disponibles.
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Los informes aparecerán aquí cuando estén disponibles.
+                  </p>
+                </div>
               </div>
             </div>
           )}
