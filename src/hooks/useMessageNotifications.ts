@@ -1,41 +1,44 @@
 import { useEffect, useRef } from 'react';
 import { useUnreadMessages } from '@/contexts/UnreadMessagesContext';
 import { useNotifications } from '@/hooks/useNotifications';
-import { useNotificationPersistence } from '@/hooks/useNotificationPersistence';
 
 export const useMessageNotifications = () => {
-  const { unreadCount } = useUnreadMessages();
-  const { showMessageNotification, isSupported } = useNotifications();
-  const { hasNotificationBeenShown, markNotificationAsShown, clearOldNotifications } = useNotificationPersistence();
-  const previousCountRef = useRef<number>(0);
+  const { messages } = useUnreadMessages();
+  const { showIndividualMessageNotification, isSupported } = useNotifications();
+  const previousMessagesRef = useRef<Set<string>>(new Set());
   const isInitialLoadRef = useRef<boolean>(true);
 
   useEffect(() => {
-    // Limpiar notificaciones antiguas al cargar
-    clearOldNotifications();
-  }, [clearOldNotifications]);
-
-  useEffect(() => {
-    // No mostrar notificación en la carga inicial
+    // No procesar notificaciones en la carga inicial
     if (isInitialLoadRef.current) {
-      previousCountRef.current = unreadCount;
+      // Guardar IDs de mensajes iniciales
+      messages.forEach(msg => {
+        if (msg.isFromAdvisor && !msg.read) {
+          previousMessagesRef.current.add(msg.id);
+        }
+      });
       isInitialLoadRef.current = false;
       return;
     }
 
-    // Solo mostrar notificación si hay nuevos mensajes (aumento en el contador)
-    if (unreadCount > previousCountRef.current && unreadCount > 0) {
-      const newMessagesCount = unreadCount - previousCountRef.current;
-      const notificationKey = `messages_${unreadCount}`;
-      
-      // Solo mostrar si no se ha mostrado antes
-      if (isSupported && !hasNotificationBeenShown(notificationKey)) {
-        showMessageNotification(newMessagesCount);
-        markNotificationAsShown(notificationKey);
-      }
+    // Obtener mensajes no leídos del asesor
+    const unreadAdvisorMessages = messages.filter(msg => msg.isFromAdvisor && !msg.read);
+    const currentMessageIds = new Set(unreadAdvisorMessages.map(msg => msg.id));
+
+    // Encontrar mensajes nuevos (que no estaban en la carga anterior)
+    const newMessages = unreadAdvisorMessages.filter(msg => 
+      !previousMessagesRef.current.has(msg.id)
+    );
+
+    // Mostrar notificación para cada mensaje nuevo
+    if (isSupported && newMessages.length > 0) {
+      newMessages.forEach(message => {
+        console.log('useMessageNotifications - Mostrando notificación para mensaje:', message.id);
+        showIndividualMessageNotification(message.content);
+      });
     }
 
-    // Actualizar el contador anterior
-    previousCountRef.current = unreadCount;
-  }, [unreadCount, showMessageNotification, isSupported, hasNotificationBeenShown, markNotificationAsShown]);
+    // Actualizar el conjunto de mensajes conocidos
+    previousMessagesRef.current = currentMessageIds;
+  }, [messages, showIndividualMessageNotification, isSupported]);
 };

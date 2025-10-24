@@ -88,6 +88,21 @@ export const useNotifications = () => {
     });
   };
 
+  const showIndividualMessageNotification = (messageContent: string) => {
+    // Truncar el contenido si es muy largo
+    const truncatedContent = messageContent.length > 100 
+      ? messageContent.substring(0, 100) + '...'
+      : messageContent;
+
+    showNotification({
+      title: 'Nuevo mensaje de tu asesora',
+      body: truncatedContent,
+      tag: `message-${Date.now()}`, // Tag único para cada mensaje
+      icon: '/favicon.ico',
+      requireInteraction: false,
+    });
+  };
+
   const showReportNotification = () => {
     showNotification({
       title: 'Nuevo informe disponible',
@@ -101,6 +116,7 @@ export const useNotifications = () => {
   return {
     showNotification,
     showMessageNotification,
+    showIndividualMessageNotification,
     showReportNotification,
     isSupported: 'Notification' in window,
     permission: permissionRef.current,

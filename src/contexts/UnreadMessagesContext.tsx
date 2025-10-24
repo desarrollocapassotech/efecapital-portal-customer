@@ -1,15 +1,17 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-import { subscribeToUnreadMessagesCount } from "@/lib/firestore";
+import { subscribeToClientMessages, Message } from "@/lib/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 
 type UnreadMessagesContextValue = {
   unreadCount: number;
+  messages: Message[];
   isLoading: boolean;
 };
 
 const UnreadMessagesContext = createContext<UnreadMessagesContextValue>({
   unreadCount: 0,
+  messages: [],
   isLoading: true,
 });
 
@@ -21,27 +23,30 @@ export const UnreadMessagesProvider = ({
   const { user } = useAuth();
   const userId = user?.id;
 
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Calcular mensajes no leídos
+  const unreadCount = messages.filter(msg => msg.isFromAdvisor && !msg.read).length;
 
   useEffect(() => {
     if (!userId) {
-      setUnreadCount(0);
+      setMessages([]);
       setIsLoading(false);
       return undefined;
     }
 
     setIsLoading(true);
 
-    const unsubscribe = subscribeToUnreadMessagesCount(
+    const unsubscribe = subscribeToClientMessages(
       userId,
-      (count) => {
-        setUnreadCount(count);
+      (fetchedMessages) => {
+        setMessages(fetchedMessages);
         setIsLoading(false);
       },
       (error) => {
         console.error("Error al obtener mensajes no leídos", error);
-        setUnreadCount(0);
+        setMessages([]);
         setIsLoading(false);
       },
     );
@@ -52,7 +57,7 @@ export const UnreadMessagesProvider = ({
   }, [userId]);
 
   return (
-    <UnreadMessagesContext.Provider value={{ unreadCount, isLoading }}>
+    <UnreadMessagesContext.Provider value={{ unreadCount, messages, isLoading }}>
       {children}
     </UnreadMessagesContext.Provider>
   );
