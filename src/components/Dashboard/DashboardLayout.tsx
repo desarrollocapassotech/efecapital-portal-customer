@@ -5,11 +5,20 @@ import Sidebar from './Sidebar';
 import Navbar from './NavBar';
 import { UnreadMessagesProvider } from '@/contexts/UnreadMessagesContext';
 import { UnreadReportsProvider } from '@/contexts/UnreadReportsContext';
+import { useMessageNotifications } from '@/hooks/useMessageNotifications';
+import { useReportNotifications } from '@/hooks/useReportNotifications';
+
+const NotificationHandler = () => {
+  useMessageNotifications();
+  useReportNotifications();
+  return null;
+};
 
 const DashboardLayout = () => {
   return (
     <UnreadMessagesProvider>
       <UnreadReportsProvider>
+        <NotificationHandler />
         <div className="flex flex-col h-screen bg-background">
           {/* Navbar superior */}
           <header>

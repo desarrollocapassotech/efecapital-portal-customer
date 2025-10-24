@@ -17,6 +17,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useUnreadMessages } from "@/contexts/UnreadMessagesContext";
 import { useUnreadReports } from "@/contexts/UnreadReportsContext";
+import { useNotifications } from "@/hooks/useNotifications";
 import { Spinner } from "@/components/ui/loading-state";
 import {
   MessageCircle,
@@ -78,6 +79,7 @@ const DashboardHome = () => {
   const navigate = useNavigate();
   const { unreadCount, isLoading: isUnreadLoading } = useUnreadMessages();
   const { badgeCount, isLoading: isUnreadReportsLoading } = useUnreadReports();
+  const { isSupported, permission } = useNotifications();
   const hasUnreadMessages = unreadCount > 0;
   const hasUnreadReports = badgeCount > 0;
   const displayUnreadMessagesCount = unreadCount > 99 ? '99+' : `${unreadCount}`;
@@ -105,6 +107,36 @@ const DashboardHome = () => {
   return (
     <div className="space-y-6 md:space-y-10 relative">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-emerald-500/5 pointer-events-none" />
+      
+      {/* Banner de notificaciones */}
+      {isSupported && permission === 'default' && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <MessageCircle className="h-5 w-5 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-blue-800">
+                Activa las notificaciones
+              </h3>
+              <p className="text-sm text-blue-700 mt-1">
+                Recibe notificaciones cuando tengas nuevos mensajes o informes disponibles.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                if ('Notification' in window) {
+                  Notification.requestPermission();
+                }
+              }}
+              className="bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              Activar
+            </button>
+          </div>
+        </div>
+      )}
+      
       <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-4 relative">
         <Card
           role="button"
