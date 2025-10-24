@@ -63,6 +63,8 @@ export interface Report {
   fecha: string; // ISO
   archivo: Archivo;
   descripcion?: string;
+  downloaded?: boolean;
+  downloadedAt?: string;
 }
 
 export interface ClienteProfile {

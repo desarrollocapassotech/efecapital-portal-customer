@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/accordion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUnreadMessages } from "@/contexts/UnreadMessagesContext";
+import { useUnreadReports } from "@/contexts/UnreadReportsContext";
 import { Spinner } from "@/components/ui/loading-state";
 import {
   MessageCircle,
@@ -76,8 +77,11 @@ const DashboardHome = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { unreadCount, isLoading: isUnreadLoading } = useUnreadMessages();
+  const { badgeCount, isLoading: isUnreadReportsLoading } = useUnreadReports();
   const hasUnreadMessages = unreadCount > 0;
+  const hasUnreadReports = badgeCount > 0;
   const displayUnreadMessagesCount = unreadCount > 99 ? '99+' : `${unreadCount}`;
+  const displayUnreadReportsCount = badgeCount > 0 ? "1" : "0";
 
   const fullName = [user?.nombre, user?.apellido].filter(Boolean).join(" ") || "Inversionista";
   const investorType = user?.tipoInversor || "Sin definir";
@@ -144,6 +148,16 @@ const DashboardHome = () => {
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-emerald-500/5 to-transparent opacity-0 transition-all duration-300 group-hover:opacity-100" />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-tl from-transparent via-emerald-500/5 to-emerald-500/10 opacity-0 transition-all duration-500 group-hover:opacity-100" />
           <CardHeader className="relative flex flex-row items-center justify-between p-4 md:p-6">
+            {isUnreadReportsLoading ? (
+              <span className="absolute right-3 top-3 md:right-4 md:top-4 flex h-5 w-5 md:h-6 md:w-6 items-center justify-center" aria-live="polite">
+                <Spinner size="sm" className="text-emerald-600" />
+                <span className="sr-only">Cargando informes no descargados</span>
+              </span>
+            ) : hasUnreadReports ? (
+              <Badge className="absolute right-3 top-3 md:right-4 md:top-4 flex h-5 w-5 md:h-6 md:w-6 min-w-[1.25rem] md:min-w-[1.5rem] items-center justify-center px-1.5 md:px-2 text-xs bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border border-emerald-400/50 shadow-lg shadow-emerald-500/30 animate-pulse">
+                {displayUnreadReportsCount}
+              </Badge>
+            ) : null}
             <div className="space-y-1 md:space-y-2">
               <CardTitle className="text-lg md:text-xl font-semibold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">Informes</CardTitle>
             </div>

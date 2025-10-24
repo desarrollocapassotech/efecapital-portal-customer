@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useUnreadMessages } from "@/contexts/UnreadMessagesContext";
+import { useUnreadReports } from "@/contexts/UnreadReportsContext";
 import { Spinner } from "@/components/ui/loading-state";
 
 const navigation = [
@@ -17,9 +18,12 @@ const Sidebar = () => {
   const location = useLocation();
   const { logout, user } = useAuth();
   const { unreadCount, isLoading: isUnreadLoading } = useUnreadMessages();
+  const { badgeCount, isLoading: isUnreadReportsLoading } = useUnreadReports();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const hasUnreadMessages = unreadCount > 0;
+  const hasUnreadReports = badgeCount > 0;
   const displayUnreadMessagesCount = unreadCount > 99 ? "99+" : `${unreadCount}`;
+  const displayUnreadReportsCount = badgeCount > 0 ? "1" : "0";
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const originalOverflowRef = useRef<string>("");
 
@@ -141,6 +145,18 @@ const Sidebar = () => {
                         ) : hasUnreadMessages ? (
                           <Badge className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-2 text-xs text-white">
                             {displayUnreadMessagesCount}
+                          </Badge>
+                        ) : null
+                      )}
+                      {item.name === "Informes" && (
+                        isUnreadReportsLoading ? (
+                          <span className="ml-auto flex h-5 w-5 items-center justify-center" aria-live="polite">
+                            <Spinner size="sm" className="text-primary" />
+                            <span className="sr-only">Cargando informes no descargados</span>
+                          </span>
+                        ) : hasUnreadReports ? (
+                          <Badge className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500 px-2 text-xs text-white">
+                            {displayUnreadReportsCount}
                           </Badge>
                         ) : null
                       )}

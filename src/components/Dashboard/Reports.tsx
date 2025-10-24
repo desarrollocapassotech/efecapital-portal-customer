@@ -4,6 +4,7 @@ import { es } from "date-fns/locale";
 import { AlertTriangle, Download, FileBarChart, FileText } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { useUnreadReports } from "@/contexts/UnreadReportsContext";
 import { subscribeToClientReports, type Report } from "@/lib/firestore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,48 +14,15 @@ import { LoadingState } from "@/components/ui/loading-state";
 
 const Reports: React.FC = () => {
   const { user } = useAuth();
-  const userId = user?.id;
-
-  const [reports, setReports] = useState<Report[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { reports, isLoading, markReportAsDownloaded, latestReport } = useUnreadReports();
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!userId) {
-      setReports([]);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    const unsubscribe = subscribeToClientReports(
-      userId,
-      (fetchedReports) => {
-        setReports(fetchedReports);
-        setIsLoading(false);
-      },
-      (firestoreError) => {
-        console.error("Error al cargar los informes", firestoreError);
-        setError("No se pudieron cargar tus informes. Intenta nuevamente más tarde.");
-        setIsLoading(false);
-      },
-    );
-
-    return () => unsubscribe();
-  }, [userId]);
-
-  const latestReport = useMemo(() => {
-    if (!reports.length) return null;
-    return [...reports].sort(
-      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
-    )[0];
-  }, [reports]);
 
   const handleDownloadReport = (report?: Report | null) => {
     if (!report || !report.archivo?.url) return;
     window.open(report.archivo.url, "_blank", "noopener,noreferrer");
+    // Marcar como descargado
+    markReportAsDownloaded(report.id);
   };
 
   return (
@@ -138,6 +106,11 @@ const Reports: React.FC = () => {
                             <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
                               PDF
                             </span>
+                            {!report.downloaded && latestReport && report.id === latestReport.id && (
+                              <span className="text-xs text-white bg-emerald-500 px-2 py-1 rounded-full font-medium animate-pulse">
+                                NUEVO
+                              </span>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
@@ -182,6 +155,11 @@ const Reports: React.FC = () => {
                           <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full flex-shrink-0">
                             PDF
                           </span>
+                          {!report.downloaded && latestReport && report.id === latestReport.id && (
+                            <span className="text-xs text-white bg-emerald-500 px-2 py-1 rounded-full font-medium animate-pulse flex-shrink-0">
+                              NUEVO
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-muted-foreground mb-3">
                           {format(new Date(report.fecha), "dd 'de' MMMM 'de' yyyy", { locale: es })}
