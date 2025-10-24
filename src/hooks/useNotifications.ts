@@ -90,7 +90,7 @@ export const useNotifications = () => {
 
   const showIndividualMessageNotification = (messageContent: string) => {
     console.log('showIndividualMessageNotification - Llamada con contenido:', messageContent);
-    console.log('showIndividualMessageNotification - isSupported:', isSupported);
+    console.log('showIndividualMessageNotification - isSupported:', 'Notification' in window);
     console.log('showIndividualMessageNotification - permission:', permissionRef.current);
     
     // Verificar si las notificaciones están permitidas
