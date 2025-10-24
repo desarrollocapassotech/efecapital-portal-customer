@@ -8,6 +8,18 @@ export const useMessageNotifications = () => {
   const previousMessagesRef = useRef<Set<string>>(new Set());
   const isInitialLoadRef = useRef<boolean>(true);
 
+  // Función de prueba temporal - REMOVER EN PRODUCCIÓN
+  const testAdvisorMessage = () => {
+    console.log('TEST: Simulando mensaje del asesor');
+    showIndividualMessageNotification('Este es un mensaje de prueba del asesor');
+  };
+
+  // Exponer función de prueba en window para testing
+  useEffect(() => {
+    (window as any).testAdvisorMessage = testAdvisorMessage;
+    console.log('TEST: Función testAdvisorMessage disponible en window.testAdvisorMessage()');
+  }, [testAdvisorMessage]);
+
   useEffect(() => {
     console.log('useMessageNotifications - messages changed:', messages.length, 'messages');
     console.log('useMessageNotifications - isInitialLoad:', isInitialLoadRef.current);
@@ -27,7 +39,12 @@ export const useMessageNotifications = () => {
     }
 
     // Obtener mensajes no leídos del asesor
-    const unreadAdvisorMessages = messages.filter(msg => msg.isFromAdvisor && !msg.read);
+    const unreadAdvisorMessages = messages.filter(msg => {
+      const isAdvisor = msg.isFromAdvisor;
+      const isUnread = !msg.read;
+      console.log(`useMessageNotifications - Mensaje ${msg.id}: isFromAdvisor=${isAdvisor}, read=${msg.read}, isUnread=${isUnread}`);
+      return isAdvisor && isUnread;
+    });
     const currentMessageIds = new Set(unreadAdvisorMessages.map(msg => msg.id));
     
     console.log('useMessageNotifications - Mensajes no leídos actuales:', unreadAdvisorMessages.length);

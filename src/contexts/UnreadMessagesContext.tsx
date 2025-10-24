@@ -41,6 +41,10 @@ export const UnreadMessagesProvider = ({
     const unsubscribe = subscribeToClientMessages(
       userId,
       (fetchedMessages) => {
+        console.log('UnreadMessagesContext - Mensajes cargados:', fetchedMessages.length);
+        fetchedMessages.forEach(msg => {
+          console.log(`UnreadMessagesContext - Mensaje ${msg.id}: isFromAdvisor=${msg.isFromAdvisor}, read=${msg.read}, content="${msg.content.substring(0, 50)}..."`);
+        });
         setMessages(fetchedMessages);
         setIsLoading(false);
       },
