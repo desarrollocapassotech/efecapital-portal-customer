@@ -541,6 +541,7 @@ const mapReportSnapshot = (
     data.reportDate ??
     data.periodo ??
     data.period ??
+    data.uploadDate ??
     data.uploadedAt ??
     data.createdAt ??
     data.updatedAt ??

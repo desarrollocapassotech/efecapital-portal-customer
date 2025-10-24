@@ -98,7 +98,7 @@ const Sidebar = () => {
             <div className="rounded-lg bg-white/5 p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-sm font-medium">Bienvenido/a</h3>
+                  <h3 className="text-sm font-medium">Hola!</h3>
                   <p className="font-semibold text-foreground">
                     {user?.nombre} {user?.apellido}
                   </p>
